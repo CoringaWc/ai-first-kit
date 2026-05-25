@@ -25,6 +25,8 @@ if [[ -f "$_self" && -d "$(dirname "$_self")/lib" ]]; then
   source "$_lib_dir/deps.sh"
   # shellcheck disable=SC1091
   source "$_lib_dir/install_kit.sh"
+  # shellcheck disable=SC1091
+  source "$_lib_dir/mcps.sh"
 else
   echo "[err ] bootstrap.sh must be executed from a checkout of ai-first-kit (cannot find scripts/lib)." >&2
   echo "       Run: git clone https://github.com/coringawc/ai-first-kit.git && bash ai-first-kit/scripts/bootstrap.sh" >&2
@@ -53,6 +55,8 @@ main() {
   fi
 
   install_kit_symlinks
+
+  apply_global_mcps
 
   log_step "ai-first-kit bootstrap complete"
   log_info "Next: open opencode and run /ai-first-init inside a project."
