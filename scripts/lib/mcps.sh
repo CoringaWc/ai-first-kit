@@ -81,14 +81,18 @@ with open(reg_path) as f:
 mcps = reg.get("mcps", [])
 
 cfg.setdefault("mcp", {})
+# opencode 1.15.10 only accepts "type": "local" or "type": "remote".
+# Any other value (including "http") causes opencode to silently drop the
+# entry — no warning, no error. Map legacy "http" -> "remote" for
+# back-compat with user registries deployed before this fix.
+_TRANSPORT_MAP = {"http": "remote", "sse": "remote"}
 for entry in mcps:
     name = entry["name"]
-    transport = entry.get("transport", "http")
+    transport = entry.get("transport", "remote")
+    transport = _TRANSPORT_MAP.get(transport, transport)
     block = {"type": transport, "enabled": True}
-    if transport == "http":
+    if transport == "remote":
         block["url"] = entry["url"]
-    if entry.get("auth") == "oauth":
-        block["auth"] = "oauth"
     cfg["mcp"][name] = block  # final assignment; diff check below decides whether to write
 
 new_text = json.dumps(cfg, indent=2, sort_keys=True) + "\n"

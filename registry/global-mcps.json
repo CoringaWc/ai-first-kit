@@ -3,14 +3,14 @@
   "mcps": [
     {
       "name": "context7",
-      "transport": "http",
+      "transport": "remote",
       "url": "https://mcp.context7.com/mcp",
       "needs": ["CONTEXT7_API_KEY"],
       "note": "If CONTEXT7_API_KEY is missing, bootstrap prompts to provide it or skip."
     },
     {
       "name": "github",
-      "transport": "http",
+      "transport": "remote",
       "url": "https://api.githubcopilot.com/mcp/",
       "auth": "oauth",
       "note": "Authenticate after restart with: opencode mcp auth github"
