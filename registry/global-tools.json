@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "tools": [
+    { "name": "node",      "min": "22",  "installer": "ensure_node_lts",  "source": "mise (node@lts)" },
+    { "name": "gh",                       "installer": "ensure_gh",        "source": "apt (cli.github.com)" },
+    { "name": "git-crypt",                "installer": "ensure_git_crypt", "source": "apt" },
+    { "name": "opencode",                 "installer": "ensure_opencode",  "source": "curl https://opencode.ai/install" },
+    { "name": "openspec",                 "installer": "ensure_openspec",  "source": "npm @fission-ai/openspec" }
+  ]
+}

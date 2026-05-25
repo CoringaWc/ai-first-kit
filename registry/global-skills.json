@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "skills": [
+    { "name": "agent-browser",         "source": "vercel-labs/agent-browser@agent-browser" },
+    { "name": "caveman",               "source": "juliusbrussee/caveman@caveman" },
+    { "name": "find-skills",           "source": "vercel-labs/skills@find-skills" },
+    { "name": "frontend-design",       "source": "anthropics/skills@frontend-design" },
+    { "name": "grill-me",              "source": "mattpocock/skills@grill-me" },
+    { "name": "grill-with-docs",       "source": "mattpocock/skills@grill-with-docs" },
+    { "name": "impeccable",            "source": "pbakaus/impeccable@impeccable" },
+    { "name": "skill-creator",         "source": "anthropics/skills@skill-creator" },
+    { "name": "web-design-guidelines", "source": "vercel-labs/agent-skills@web-design-guidelines" }
+  ]
+}
