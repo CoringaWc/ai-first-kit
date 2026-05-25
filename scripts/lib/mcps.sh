@@ -93,6 +93,12 @@ for entry in mcps:
     block = {"type": transport, "enabled": True}
     if transport == "remote":
         block["url"] = entry["url"]
+    # Propagate optional opencode-recognized keys from the registry entry.
+    # opencode 1.15.10 understands "auth" (e.g. "oauth") for remote MCPs;
+    # without this, /opencode mcp auth <name> has nothing to bind to.
+    for opt_key in ("auth",):
+        if opt_key in entry:
+            block[opt_key] = entry[opt_key]
     cfg["mcp"][name] = block  # final assignment; diff check below decides whether to write
 
 new_text = json.dumps(cfg, indent=2, sort_keys=True) + "\n"
