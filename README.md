@@ -18,9 +18,22 @@ This release ships **only** the host bootstrap and the kit skeleton.
 - Project packs (e.g. Laravel + Filament).
 - `bash <(curl ...)` one-liner install.
 
+See [`docs/known-issues-v0.1.md`](./docs/known-issues-v0.1.md) for deferred review findings.
+
 ## Supported hosts
 
 Ubuntu, Debian, WSL Ubuntu. Other Linux distros and Windows native are not supported.
+
+## Prerequisites
+
+Before running `bootstrap.sh` you need:
+
+- **sudo access** — used to `apt install` baseline packages (`git`, `curl`, `ca-certificates`, `python3`, `python3-json5`). The script will prompt for your password.
+- **`git`** — used to fetch the kit itself. If not installed, the bootstrap installs it via apt on first run, but you need git to do `git clone` of this repo in the first place. Install with `sudo apt install git` if missing.
+- **`curl`** — same as git; needed to fetch the bootstrap or to clone over HTTPS.
+- **A working internet connection** — fetches `mise`, `opencode`, `gh`, and npm packages.
+
+Docker is **only** required if you want to run the verification suite (`tests/verify/all.sh`). It is not needed to use the kit at runtime.
 
 ## Install
 
@@ -41,6 +54,61 @@ Re-running is safe: every step is idempotent.
 | `AFK_KIT_BRANCH=<name>`      | Override the branch to clone/track (default: `main`).             |
 | `AFK_SKIP_TOOLS=1`           | Skip host tool installers (used by sandbox tests).                |
 | `AFK_SKIP_CLONE=1`           | Skip cloning the kit (used by sandbox tests).                     |
+
+## After install
+
+The bootstrap modifies your shell environment (`mise` shims, `~/.local/bin`). To pick up the changes:
+
+```bash
+exec $SHELL -l
+```
+
+Or just open a new terminal.
+
+Then complete one-time auth steps that the bootstrap cannot do for you:
+
+- **GitHub MCP (OAuth):**
+  ```bash
+  opencode mcp auth github
+  ```
+  Follow the device-code flow. opencode caches the token under `~/.local/share/opencode/`.
+
+- **Context7 MCP (API key, optional but recommended):**
+  Get a key at <https://context7.com>, then export it (add to your shell rc to persist):
+  ```bash
+  export CONTEXT7_API_KEY=ctx7sk-...
+  ```
+  Without a key, Context7 still works for public docs but is rate-limited.
+
+- **GitHub CLI (`gh`):**
+  ```bash
+  gh auth login
+  ```
+  Used by future kit commands that create repos / open PRs.
+
+Verify everything is wired up:
+
+```bash
+opencode --version
+mise current node
+gh auth status
+```
+
+## Troubleshooting
+
+**`bash: opencode: command not found` after bootstrap finished cleanly**
+The `mise` shims are not on your `PATH` in the current shell. Run `exec $SHELL -l` or open a new terminal.
+
+**`bootstrap.sh: line N: log_info: command not found`**
+You invoked `bootstrap.sh` without its sibling `scripts/lib/` directory. Don't `curl | bash` it — `git clone` the repo first, then run the script from inside the checkout.
+
+**`apply_global_mcps` warns "original config had comments; backed up to ..."**
+Expected on first run if you already had a hand-edited `~/.config/opencode/opencode.jsonc` with `//` or `/* */` comments. We rewrite the file as pure JSON; your original is safe at `opencode.jsonc.bak-<timestamp>`. Re-runs on the freshly-written (commentless) file produce no further backups.
+
+**`Symlink summary: N entries were skipped`**
+You already had files or symlinks at `~/.config/opencode/skills/ai-first-*` or `~/.config/opencode/commands/ai-first-*` pointing somewhere else. The bootstrap preserved them (won't clobber your customizations). To accept the kit's versions, remove the offending entries and re-run.
+
+**Docker required only for tests** — the verify suite (`tests/verify/all.sh`) builds a sandbox image. If you only want to *use* the kit, you can skip Docker entirely.
 
 ## Structure
 
