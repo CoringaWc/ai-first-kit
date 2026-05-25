@@ -65,3 +65,20 @@ var="$(cmd)"
 ## Not a bug — #10 (color escape codes)
 
 The review listed `printf '\033[...'` as a potential issue. We verified it's correct ANSI; rendered fine across all tested terminals. No action.
+
+---
+
+## Upstream — opencode silently drops MCP entries with unknown `type`
+
+**Not a kit issue, but worth knowing.** opencode 1.15.10 accepts only
+`"type": "local"` or `"type": "remote"` for MCP entries in
+`~/.config/opencode/opencode.jsonc`. Any other value (including the
+plausible-sounding `"http"`) causes opencode to silently drop the
+entry. `opencode mcp list` reports "No MCP servers configured" and no
+warning is emitted — not even with `--log-level DEBUG`.
+
+This bug masked a defect in this kit's v0.1 prior to commit c10df48.
+If you maintain a fork of the kit or hand-edit your opencode.jsonc,
+double-check that every MCP entry has `"type": "remote"` (HTTP/SSE)
+or `"type": "local"` (stdio). A draft upstream bug report is in the
+project's issue notes.
