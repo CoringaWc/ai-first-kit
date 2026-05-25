@@ -82,3 +82,29 @@ If you maintain a fork of the kit or hand-edit your opencode.jsonc,
 double-check that every MCP entry has `"type": "remote"` (HTTP/SSE)
 or `"type": "local"` (stdio). A draft upstream bug report is in the
 project's issue notes.
+
+---
+
+## ai-first-init v0.1 does not adopt existing projects
+
+`/ai-first-init` v0.1 creates a brand-new project folder from scratch. It does not initialize or modify an existing project. A future `ai-first-adopt` skill (v0.2+) will handle that case.
+
+**Workaround:** for existing repos, manually copy the files `ai-first-init` would create (`.cert/.gitignore`, `.git-crypt-keys/.gitignore`, `.gitattributes`, `.agents/skills/` from the desired pack) into the project root.
+
+**Fix idea (v0.2):** new skill `ai-first-adopt` + `scripts/adopt-project.sh` that detects existing scaffolding, merges non-destructively, and offers a dry-run mode.
+
+---
+
+## v0.1 script hardening deferred
+
+Code review of `scripts/create-pack.sh` (commit a816830) and `scripts/init-project.sh` (commit 4bb195d) flagged the following as v0.2 work. None block v0.1 happy path; all are surfaced here so they're not lost.
+
+**`scripts/init-project.sh` and `scripts/create-pack.sh`:**
+- No cleanup-on-failure trap. If the script aborts mid-scaffold (e.g. after `mkdir` but before `git init`), the partial destination directory is left behind. User must `rm -rf` manually.
+- README heredoc expands `$` inside the user-supplied `PACK_DESC` / project name. A description containing `$(command)` would execute that command at scaffold time. Real-world impact is low (the user is scaffolding their own project), but the heredoc should be quoted (`<<'EOF'`) and values substituted via explicit placeholders.
+- `git init -b main >/dev/null 2>&1` swallows stderr. If `git init` fails for an unexpected reason (e.g. corrupt template dir), the user sees a generic "git commit failed" downstream instead of the real cause.
+
+**`scripts/create-pack.sh`:**
+- Embedded Python interpreter (`python3 -c "..."`) is not pre-checked. On a host without `python3`, the script dies with a confusing "python3: command not found" instead of a friendly "missing prerequisite" message. `scripts/lib/deps.sh` already has `require_cmd` patterns we should adopt.
+
+**Fix idea (v0.2):** add `trap 'cleanup_on_failure' ERR EXIT` patterns, quote heredocs, route `git init` stderr through `log_warn`, and add a `require_cmd python3` gate at the top of `create-pack.sh`.

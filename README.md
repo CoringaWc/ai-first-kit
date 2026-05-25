@@ -10,13 +10,17 @@ This release ships **only** the host bootstrap and the kit skeleton.
 - `scripts/bootstrap.sh`: installs host tools (Node ≥22 via [`mise`](https://mise.jdx.dev), `gh`, `git-crypt`, `opencode` via the [official installer](https://opencode.ai/install), `openspec` via npm) and clones the kit to `~/.config/opencode/ai-first-kit`.
 - Symlinks the kit's own skills (`ai-first-*`) and commands into opencode's discovery paths.
 - Merges baseline MCPs (Context7 + GitHub Copilot MCP with OAuth) into `~/.config/opencode/opencode.jsonc` non-destructively.
-- Sandboxed per-task verification via Docker (`tests/verify/all.sh`).
+- `/ai-first-init` (skill + `scripts/init-project.sh`): scaffolds a brand-new AI-first project from a stack pack under `packs/`.
+- `/create-pack` (project-local skill + `scripts/create-pack.sh`, maintainers only): scaffolds a new pack under `packs/`.
+- Sandboxed per-task verification via Docker (`tests/verify/all.sh`, plus `tests/verify/init.sh` end-to-end).
 
 **Not yet implemented (planned for v0.2+):**
 - External skill sync via `npx skills add` (registry exists but is data-only).
-- Bodies of `ai-first-init`, `ai-first-update`, `ai-first-manage-skills`.
-- Project packs (e.g. Laravel + Filament).
+- Bodies of `ai-first-update`, `ai-first-manage-skills`.
+- `ai-first-adopt` skill (initialize the kit inside an existing project — current `/ai-first-init` only creates fresh projects).
+- Real project packs shipped in `packs/` (e.g. Laravel + Filament). `packs/` is empty in v0.1; maintainers create local packs via `/create-pack`.
 - `bash <(curl ...)` one-liner install.
+- Script hardening: cleanup-on-failure traps in `init-project.sh` / `create-pack.sh`, README heredoc input sanitization, `git init` error surface.
 
 See [`docs/known-issues-v0.1.md`](./docs/known-issues-v0.1.md) for deferred review findings.
 
@@ -113,11 +117,12 @@ You already had files or symlinks at `~/.config/opencode/skills/ai-first-*` or `
 ## Structure
 
 ```
-scripts/        # bootstrap.sh and lib/
+scripts/        # bootstrap.sh, init-project.sh, create-pack.sh, and lib/
 registry/       # global skills / MCPs / tools manifests (data)
 skills/         # ai-first-* skills (own)
 commands/       # /ai-first-* commands (own)
-packs/          # per-stack packs (placeholder)
+.agents/skills/ # project-local skills visible only when opencode opens this clone (e.g. create-pack)
+packs/          # per-stack packs (empty in v0.1; maintainers add via /create-pack)
 templates/      # reusable snippets (placeholder)
 tests/          # sandbox image + per-task verifiers
 docs/           # plans and design notes
