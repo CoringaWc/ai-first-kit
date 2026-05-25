@@ -38,7 +38,7 @@ main() {
   require_ubuntu_like
 
   if [[ "${AFK_SKIP_TOOLS:-0}" != "1" ]]; then
-    ensure_apt_pkg git curl ca-certificates
+    ensure_apt_pkg git curl ca-certificates python3
     ensure_node_lts
     ensure_gh
     ensure_git_crypt
