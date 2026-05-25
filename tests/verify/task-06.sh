@@ -36,6 +36,8 @@ tests/sandbox/run.sh '
   ln -sfn /tmp/elsewhere $AFK_OPENCODE_SKILLS_DIR/ai-first-init
   install_kit_symlinks
   [[ "$(readlink $AFK_OPENCODE_SKILLS_DIR/ai-first-init)" == "/tmp/elsewhere" ]] && echo PRESERVED_OK
+  # The summary line must mention at least 1 skipped entry from the divergent-link preservation.
+  install_kit_symlinks 2>&1 | grep -q "Symlink summary:" && echo SUMMARY_OK
 ' 2>&1 | tee /tmp/task-06.out
 
 grep -q '^SKILL1_OK$'     /tmp/task-06.out
@@ -44,5 +46,6 @@ grep -q '^CMD_OK$'        /tmp/task-06.out
 grep -q '^TARGET_OK$'     /tmp/task-06.out
 grep -q '^IDEMPOTENT_OK$' /tmp/task-06.out
 grep -q '^PRESERVED_OK$'  /tmp/task-06.out
+grep -q '^SUMMARY_OK$'    /tmp/task-06.out
 
 echo "[verify task-06] PASS"

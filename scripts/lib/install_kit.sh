@@ -8,6 +8,8 @@ AFK_KIT_DIR="${AFK_KIT_DIR:-$HOME/.config/opencode/ai-first-kit}"
 AFK_OPENCODE_SKILLS_DIR="${AFK_OPENCODE_SKILLS_DIR:-$HOME/.config/opencode/skills}"
 AFK_OPENCODE_COMMANDS_DIR="${AFK_OPENCODE_COMMANDS_DIR:-$HOME/.config/opencode/commands}"
 
+AFK_SYMLINK_SKIPPED=0
+
 # install_kit_clone — clones the kit if missing, otherwise fast-forwards.
 # Does NOT hardcode --branch on clone (works even if remote default differs);
 # checks out AFK_KIT_BRANCH after clone if that branch exists.
@@ -16,12 +18,25 @@ install_kit_clone() {
   if [[ -d "$AFK_KIT_DIR/.git" ]]; then
     log_step "Updating kit at $AFK_KIT_DIR"
     git -C "$AFK_KIT_DIR" fetch --quiet origin
-    if git -C "$AFK_KIT_DIR" rev-parse --verify --quiet "origin/$AFK_KIT_BRANCH" >/dev/null; then
-      git -C "$AFK_KIT_DIR" checkout --quiet "$AFK_KIT_BRANCH"
-      git -C "$AFK_KIT_DIR" pull --ff-only --quiet
-    else
+    if ! git -C "$AFK_KIT_DIR" rev-parse --verify --quiet "origin/$AFK_KIT_BRANCH" >/dev/null; then
       log_warn "Remote branch '$AFK_KIT_BRANCH' not found; staying on current branch."
+      return 0
     fi
+    # Refuse to fast-forward if working tree is dirty.
+    if ! git -C "$AFK_KIT_DIR" diff --quiet HEAD 2>/dev/null; then
+      log_warn "Local changes detected in $AFK_KIT_DIR — skipping update."
+      log_warn "  Stash or reset them, then re-run bootstrap to refresh."
+      return 0
+    fi
+    git -C "$AFK_KIT_DIR" checkout --quiet "$AFK_KIT_BRANCH"
+    # Refuse to fast-forward if HEAD has commits not in origin/<branch>.
+    local local_ahead
+    local_ahead="$(git -C "$AFK_KIT_DIR" rev-list --count "origin/$AFK_KIT_BRANCH..HEAD" 2>/dev/null || echo 0)"
+    if (( local_ahead > 0 )); then
+      log_warn "Local branch is $local_ahead commit(s) ahead of origin/$AFK_KIT_BRANCH — skipping pull."
+      return 0
+    fi
+    git -C "$AFK_KIT_DIR" pull --ff-only --quiet
   else
     log_step "Cloning kit into $AFK_KIT_DIR"
     git clone --quiet "$AFK_KIT_REPO_URL" "$AFK_KIT_DIR"
@@ -51,11 +66,13 @@ _afk_symlink() {
       ln -sfn "$target" "$link"
       log_info "Updated symlink: $link -> $target"
     else
+      AFK_SYMLINK_SKIPPED=$((AFK_SYMLINK_SKIPPED + 1))
       log_warn "Kept existing symlink: $link -> $current"
     fi
     return 0
   fi
   if [[ -e "$link" ]]; then
+    AFK_SYMLINK_SKIPPED=$((AFK_SYMLINK_SKIPPED + 1))
     log_warn "Path exists and is not a symlink: $link — skipping. Resolve manually."
     return 0
   fi
@@ -80,4 +97,8 @@ install_kit_symlinks() {
     name="$(basename "$cmd_src")"
     _afk_symlink "$cmd_src" "$AFK_OPENCODE_COMMANDS_DIR/$name"
   done
+
+  if (( AFK_SYMLINK_SKIPPED > 0 )); then
+    log_warn "Symlink summary: $AFK_SYMLINK_SKIPPED entries were skipped (see warnings above)."
+  fi
 }
