@@ -1,14 +1,102 @@
 {
-  "version": 1,
+  "version": 2,
+  "_doc": "Reproducibility manifest for global opencode skills. Each entry declares how to install. v2 adds 'method' field; v1 entries auto-migrate to method=symlink.",
   "skills": [
-    { "name": "agent-browser",         "source": "vercel-labs/agent-browser@agent-browser" },
-    { "name": "caveman",               "source": "juliusbrussee/caveman@caveman" },
-    { "name": "find-skills",           "source": "vercel-labs/skills@find-skills" },
-    { "name": "frontend-design",       "source": "anthropics/skills@frontend-design" },
-    { "name": "grill-me",              "source": "mattpocock/skills@grill-me" },
-    { "name": "grill-with-docs",       "source": "mattpocock/skills@grill-with-docs" },
-    { "name": "impeccable",            "source": "pbakaus/impeccable@impeccable" },
-    { "name": "skill-creator",         "source": "anthropics/skills@skill-creator" },
-    { "name": "web-design-guidelines", "source": "vercel-labs/agent-skills@web-design-guidelines" }
+    {
+      "name": "agent-browser",
+      "method": { "kind": "symlink", "source": "vercel-labs/agent-browser@agent-browser" }
+    },
+    {
+      "name": "caveman",
+      "method": { "kind": "symlink", "source": "juliusbrussee/caveman@caveman" }
+    },
+    {
+      "name": "find-skills",
+      "method": { "kind": "symlink", "source": "vercel-labs/skills@find-skills" }
+    },
+    {
+      "name": "frontend-design",
+      "method": { "kind": "symlink", "source": "anthropics/skills@frontend-design" }
+    },
+    {
+      "name": "grill-me",
+      "method": { "kind": "symlink", "source": "mattpocock/skills@grill-me" }
+    },
+    {
+      "name": "grill-with-docs",
+      "method": { "kind": "symlink", "source": "mattpocock/skills@grill-with-docs" }
+    },
+    {
+      "name": "impeccable",
+      "method": { "kind": "symlink", "source": "pbakaus/impeccable@impeccable" }
+    },
+    {
+      "name": "skill-creator",
+      "method": { "kind": "symlink", "source": "anthropics/skills@skill-creator" }
+    },
+    {
+      "name": "web-design-guidelines",
+      "method": { "kind": "symlink", "source": "vercel-labs/agent-skills@web-design-guidelines" }
+    },
+    {
+      "name": "graphify",
+      "method": {
+        "kind": "cli",
+        "package_manager": "uv",
+        "package": "graphifyy",
+        "install_cmd": "uv tool install graphifyy",
+        "post_install_cmd": "graphify install --platform opencode",
+        "post_install_cleanup": "rm -rf .opencode",
+        "notes": "Installs SKILL to ~/.config/opencode/skills/graphify/ and a hook plugin in CWD/.opencode/plugins/. We move the plugin to ~/.config/opencode/plugins/ for global activation and remove .opencode/ from CWD."
+      }
+    },
+    {
+      "name": "ecc-laravel",
+      "method": {
+        "kind": "install-script",
+        "repo": "EveryoneContributes/ECC",
+        "clone_to": "/tmp/opencode/ecc-inspect/ECC",
+        "install_cmd": "bash install.sh --target opencode --profile developer && bash install.sh --target opencode --with framework:laravel && bash install.sh --target opencode --skills laravel-patterns,laravel-tdd,laravel-verification,laravel-plugin-discovery",
+        "install_dir": "~/.opencode",
+        "post_install_move": "mv ~/.opencode/* ~/.config/opencode/ (item by item; rename package.json -> package-ecc.json, node_modules -> node_modules-ecc, opencode.json -> opencode-ecc.json)",
+        "merge_required": "opencode-ecc.json must be hand-merged into opencode.jsonc (curated: 12 cross-stack agents + 11 cross-stack commands)",
+        "notes": "ECC installer is hardcoded to ~/.opencode/. Manual relocation needed because opencode 1.15.10 only reads ~/.config/opencode/."
+      }
+    },
+    {
+      "name": "design-md-library",
+      "method": {
+        "kind": "wrapper-skill",
+        "external_repo": "VoltAgent/awesome-design-md",
+        "clone_cmd": "git clone --depth 1 https://github.com/VoltAgent/awesome-design-md.git ~/.config/opencode/external/awesome-design-md",
+        "skill_path": "~/.config/opencode/skills/design-md-library/SKILL.md",
+        "notes": "Not a real skill repo — curated catalog of 71 brand/product design.md files under design-md/<brand>/design.md. We clone the repo and ship a wrapper SKILL.md (in this kit's source) that teaches the agent how to consult the catalog when designing UI."
+      }
+    },
+    {
+      "name": "get-shit-done-redux",
+      "method": {
+        "kind": "cli",
+        "package_manager": "npx",
+        "package": "@opengsd/get-shit-done-redux",
+        "install_cmd": "npx --yes @opengsd/get-shit-done-redux@latest --opencode --global --profile=full",
+        "install_dir": "~/.config/opencode/ (commands singular dir, agents plural dir, get-shit-done/ runtime, hooks/, skills/, plugins/superpowers.js)",
+        "state_files": "~/.config/opencode/gsd-install-state.json, gsd-file-manifest.json, gsd-migration-journal/",
+        "global_defaults": "~/.gsd/defaults.json (resolve_model_ids: omit)",
+        "known_issues": "Installer reports 161 unreplaced .claude/ refs across 30 files (Claude-Code-only commands: cost-report, multi-backend, hookify, prp-*, sessions — non-functional in opencode standalone). 16 GSD agents have .claude/skills/ fallback refs that are harmless.",
+        "notes": "Successor of archived gsd-build/get-shit-done. Profile=full installs 67 commands + ~33 agents + bundled hooks + SDK symlink at ~/.local/bin/gsd-sdk."
+      }
+    },
+    {
+      "name": "uipro",
+      "method": {
+        "kind": "cli",
+        "package_manager": "npx",
+        "package": "uipro-cli",
+        "install_cmd": "mkdir -p /tmp/uipro-probe && cd /tmp/uipro-probe && npx --yes uipro-cli@latest init --ai opencode --force",
+        "post_install_cmd": "cp -r /tmp/uipro-probe/.opencode/skills/ui-ux-pro-max ~/.config/opencode/skills/ && rm -rf /tmp/uipro-probe ~/.config/opencode/skills/ui-ux-pro-max/scripts/__pycache__",
+        "notes": "uipro-cli has no --global flag — installs to <cwd>/.opencode/skills/ui-ux-pro-max. We run it in a tmp sandbox and relocate the skill dir to ~/.config/opencode/skills/. SKILL.md is registered as 'ui-ux-pro-max' (not 'uipro')."
+      }
+    }
   ]
 }

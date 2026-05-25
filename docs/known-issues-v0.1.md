@@ -112,3 +112,42 @@ Code review of `scripts/create-pack.sh` (commit a816830) and `scripts/init-proje
 - `skills/ai-first-init/SKILL.md` exit-code table for code `3` says "destination exists"; actual script behavior is "destination exists and non-empty" (an existing empty directory is reused silently). Tighten the SKILL.md wording to match.
 
 **Fix idea (v0.2):** add `trap 'cleanup_on_failure' ERR EXIT` patterns, quote heredocs, route `git init` stderr through `log_warn`, add a `require_cmd python3` gate at the top of `create-pack.sh`, switch `init-project.sh`'s `PACK_DESC` extraction to the heredoc+`sys.argv` form, and tighten the SKILL exit-code-3 description.
+
+---
+
+## Global skills install plan — `npx skills add` cancelled
+
+The README originally hinted at a planned `npx skills add` automation. That path is **dropped**: there is no single CLI that installs the diverse set of skills we use (some are git symlinks, some are uv tools, some are npx installers, some are manual clones). The supported flow is the per-skill recipe declared in `registry/global-skills.json` (schema v2, `method.kind` discriminator). Treat that file as the reproducibility manifest.
+
+---
+
+## ECC commands collide with `opencode.jsonc` bindings
+
+When ECC (`EveryoneContributes/ECC`) is installed via `install.sh --target opencode`, it ships ~80 `commands/*.md` files. 11 of them collide by name with the cross-stack commands declared in `~/.config/opencode/opencode.jsonc` (`plan`, `tdd`, `code-review`, `security`, `build-fix`, `e2e`, `refactor-clean`, `orchestrate`, `update-docs`, `update-codemaps`, `test-coverage`).
+
+opencode 1.15.10 resolves command-key collisions in favour of the `.md` file's frontmatter `agent:` field, so the curated `opencode.jsonc` bindings would be silently overridden. Worse: ECC's frontmatter uses the namespaced form `agent: everything-claude-code:<name>`, and that plugin pack does not exist for opencode — so the affected commands would error at invocation time.
+
+**Workaround (applied during initial setup):** strip the namespace prefix in-place:
+```bash
+cd ~/.config/opencode/commands
+for f in plan.md tdd.md code-review.md security.md build-fix.md e2e.md \
+         refactor-clean.md orchestrate.md update-docs.md update-codemaps.md \
+         test-coverage.md; do
+  sed -i 's|^agent: everything-claude-code:|agent: |' "$f"
+done
+```
+After the patch, ECC commands resolve to the matching curated subagents declared in `opencode.jsonc` (`planner`, `tdd-guide`, `code-reviewer`, etc.). Verified via `opencode debug config` showing zero unresolved `everything-claude-code:` references.
+
+**Caveat:** re-running the ECC installer with `--force` will overwrite the patched frontmatter. Re-apply the sed loop after any ECC reinstall.
+
+---
+
+## GSD installer leaves 161 unconverted `.claude/` references
+
+`@opengsd/get-shit-done-redux@latest --opencode --global --profile=full` ships 67 commands and ~33 agents. Its installer reports `161 unreplaced .claude/ references across 30 files`. Inspection shows two distinct classes:
+
+1. **29 ECC-bundled commands** (`cost-report`, `multi-backend`, `multi-execute`, `hookify*`, `prp-*`, `sessions`, `save-session`, `resume-session`, `pm2`, `pr`, `promote`, `prune`, `evolve`, `instinct-status`, `learn-eval`, `loop-start`, `plan-prd`, `project-init`, `projects`, `security-scan`, `setup-pm`) — these reference Claude-Code-only infrastructure (`~/.claude/bin/codeagent-wrapper`, `~/.claude-cost-tracker/usage.db`, `.claude/.ccg/prompts/...`). They are **non-functional in opencode standalone**. Not patchable without re-implementing the Claude Code runtime.
+
+2. **16 GSD agents** (`gsd-code-reviewer`, `gsd-doc-writer`, etc.) — these have defensive fallback reads of `.claude/skills/` or `.agents/skills/`. They work in opencode because the read is conditional ("check if either dir exists"). No action needed.
+
+**Action:** none. The non-functional Claude-Code commands are kept on disk for parity with the upstream installer; they will simply error if invoked. The fallback refs in agents are intentional and harmless.

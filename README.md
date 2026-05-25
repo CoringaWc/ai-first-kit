@@ -15,7 +15,7 @@ This release ships **only** the host bootstrap and the kit skeleton.
 - Sandboxed per-task verification via Docker (`tests/verify/all.sh`, plus `tests/verify/init.sh` end-to-end).
 
 **Not yet implemented (planned for v0.2+):**
-- External skill sync via `npx skills add` (registry exists but is data-only).
+- External skill sync via a single CLI (`npx skills add`-style). **Dropped:** there is no universal installer for the heterogeneous set of skills we use (git symlinks, `uv tool install`, npx CLIs, manual clones, wrapper SKILLs). The supported reproducibility flow is the per-skill recipe under [`registry/global-skills.json`](./registry/global-skills.json) (schema v2, `method.kind` discriminator). See [`docs/known-issues-v0.1.md`](./docs/known-issues-v0.1.md#global-skills-install-plan--npx-skills-add-cancelled).
 - Bodies of `ai-first-update`, `ai-first-manage-skills`.
 - `ai-first-adopt` skill (initialize the kit inside an existing project — current `/ai-first-init` only creates fresh projects).
 - Real project packs shipped in `packs/` (e.g. Laravel + Filament). `packs/` is empty in v0.1; maintainers create local packs via `/create-pack`.
