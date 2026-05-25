@@ -107,4 +107,8 @@ Code review of `scripts/create-pack.sh` (commit a816830) and `scripts/init-proje
 **`scripts/create-pack.sh`:**
 - Embedded Python interpreter (`python3 -c "..."`) is not pre-checked. On a host without `python3`, the script dies with a confusing "python3: command not found" instead of a friendly "missing prerequisite" message. `scripts/lib/deps.sh` already has `require_cmd` patterns we should adopt.
 
-**Fix idea (v0.2):** add `trap 'cleanup_on_failure' ERR EXIT` patterns, quote heredocs, route `git init` stderr through `log_warn`, and add a `require_cmd python3` gate at the top of `create-pack.sh`.
+**From final review (commit 037542b):**
+- `scripts/init-project.sh:101` parses `PACK_DESC` via `python3 -c "...'$PACK_DIR/manifest.json'..."` (string-interpolated path) while the sibling `scripts/create-pack.sh:59-64` already uses the safe `python3 - "$arg" <<'PY' … sys.argv[1] …` pattern. Today the slug regex `^[a-z0-9][a-z0-9-]*$` blocks the obvious quote-break, so it is **not currently exploitable**, but the asymmetry is a foot-gun: if anyone relaxes the regex later, this becomes a real RCE. Adopt the heredoc + `sys.argv` form in `init-project.sh` too.
+- `skills/ai-first-init/SKILL.md` exit-code table for code `3` says "destination exists"; actual script behavior is "destination exists and non-empty" (an existing empty directory is reused silently). Tighten the SKILL.md wording to match.
+
+**Fix idea (v0.2):** add `trap 'cleanup_on_failure' ERR EXIT` patterns, quote heredocs, route `git init` stderr through `log_warn`, add a `require_cmd python3` gate at the top of `create-pack.sh`, switch `init-project.sh`'s `PACK_DESC` extraction to the heredoc+`sys.argv` form, and tighten the SKILL exit-code-3 description.
