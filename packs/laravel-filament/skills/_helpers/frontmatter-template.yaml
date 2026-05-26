@@ -1,0 +1,15 @@
+---
+name: <slug-kebab-case>
+description: "Aplicar quando <gatilho explícito pt_BR>. Cobre <escopo>. Use when <english trigger>."
+license: MIT
+metadata:
+  author: coringawc
+  version: 1.0.0
+  requires:
+    # Skills Boost pré-requisito (sempre verificar instalação)
+    - laravel-best-practices
+    - spatie-laravel-php-standards
+  related:
+    # Skills nossas que se compõem
+    - <outra-skill-nossa>
+---
