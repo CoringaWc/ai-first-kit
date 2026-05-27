@@ -19,6 +19,7 @@ Battle-tested in the **Processo Migratório TPA Fernando de Noronha** project. S
 - `filament-schema-class` — extract Form/Table schemas into dedicated classes.
 - `filament-form-component-reusable` — build reusable Form components.
 - `filament-table-defaults` — table defaults (filters, search, bulk actions).
+- `filament-cache-performance` — counts, badges, aggregates, and safe cache for Filament tables/resources.
 - `filament-action-with-modal-heading` — action modals with proper headings.
 - `filament-relation-page` — Relation pages on Resources.
 - `filament-nested-resource` — nested resources pattern.

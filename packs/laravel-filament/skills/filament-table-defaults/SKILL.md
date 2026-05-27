@@ -13,6 +13,7 @@ metadata:
     - filament-app-panel-provider-defaults
     - filament-resource-scaffold
     - filament-action-with-modal-heading
+    - filament-cache-performance
     - enum-with-translations
 ---
 
@@ -30,6 +31,7 @@ Densidade extra mora em `rules/`:
 - `rules/advanced-filters.md` — `Filter` com schema custom, `QueryBuilder`, filtros condicionais.
 - `rules/performance.md` — `deferLoading()`, `persistFiltersInSession()`, `persistSortInSession()`, eager loading.
 - `rules/visual-defaults.md` — `striped()`, `reorderable()`, `groups()`, `recordUrl()`, `recordAction()`.
+- Para badges, `withCount()`, `counts()` e cache de contagens, aplicar `filament-cache-performance`.
 
 ## Quick Reference
 
@@ -40,6 +42,7 @@ Densidade extra mora em `rules/`:
 - Filtros base: `TrashedFilter` para SoftDeletes, `SelectFilter` para enum/relationship, `TernaryFilter` para boolean, `Filter` com `->schema()` + `->query()` para intervalo.
 - Actions de linha: namespace `Filament\Actions\*` (v5). Bulk actions: `->toolbarActions([...])` ou `->groupedBulkActions([...])` (v5).
 - Toda action de tabela que abre modal exige `modalHeading(__('English'))` (ver `filament-action-with-modal-heading`).
+- Contagens em coluna usam `TextColumn::make('items_count')->counts('items')`; cache de badge segue `filament-cache-performance`.
 
 ## Workflow
 
@@ -132,6 +135,8 @@ return $table
 
 - [ ] Para `deferLoading`, `persistFiltersInSession`, eager loading, ver `rules/performance.md`.
 
+- [ ] Para badges, relation tab counts, `withCount()` ou cache de contagem, ver `filament-cache-performance`.
+
 - [ ] Para `striped`, `reorderable`, `groups`, `recordUrl`, ver `rules/visual-defaults.md`.
 
 - [ ] Testar com Pest/Livewire cobrindo records visíveis, search, filtros principais e sort quando alterado.
@@ -166,4 +171,5 @@ return $table
 - `filament-app-panel-provider-defaults` — Panel Provider centraliza defaults globais de actions, sections e brand.
 - `filament-resource-scaffold` — Resources novos devem usar tabelas consistentes via esta skill.
 - `filament-action-with-modal-heading` — actions de tabela que abrem modal exigem `modalHeading()` traduzido.
+- `filament-cache-performance` — contagens, aggregates, badges e cache seguro para Table/Resource.
 - `enum-with-translations` — enums usados em `SelectFilter` precisam de labels traduzidos via `HasLabel`.
