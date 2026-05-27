@@ -87,6 +87,46 @@ locate_app_container() {
               --format '{{.Names}}' | grep -E '(-app-1|-laravel\.test-1)$' | head -1
 }
 
+is_smoke_secret_path() {
+    local path="${1,,}"
+
+    case "$path" in
+        .env|.env.testing|.env.local|.env.*.local|.npmrc|auth.json|.cert/*|.git-crypt-keys/*|*.key|*.pem|*credential*|*credentials*|*secret*|*secrets*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+unstage_smoke_secrets() {
+    while IFS= read -r path; do
+        if is_smoke_secret_path "$path"; then
+            git reset -q -- "$path" 2>/dev/null || true
+        fi
+    done < <(git diff --cached --name-only)
+}
+
+exclude_smoke_secret_paths() {
+    [[ -d .git/info ]] || return 0
+
+    for pattern in '.env' '.env.*' '.npmrc' 'auth.json' '.cert/*' '.git-crypt-keys/*' '*.key' '*.pem' '*credential*' '*credentials*' '*secret*' '*secrets*'; do
+        grep -qxF "$pattern" .git/info/exclude 2>/dev/null || printf '%s\n' "$pattern" >> .git/info/exclude
+    done
+}
+
+stage_smoke_files() {
+    exclude_smoke_secret_paths
+    unstage_smoke_secrets
+
+    while IFS= read -r path; do
+        if is_smoke_secret_path "$path"; then
+            continue
+        fi
+
+        git add -- "$path"
+    done < <(git ls-files --others --modified --deleted --exclude-standard)
+
+    unstage_smoke_secrets
+}
+
 # ---------------- Stage 1: A1 init-project ----------------
 # IMPORTANT: composer create-project REQUIRES an empty target directory.
 # Stage 1 must run BEFORE Stage 1.1 (kit copy) — otherwise create-project
@@ -100,7 +140,7 @@ stage1_a1() {
         composer require laravel/sail --dev
         php artisan sail:install --with=pgsql,redis --no-interaction
     fi
-    [[ -d .git ]] || { git init -q; git add . >/dev/null; git -c user.email=smoke@test -c user.name=smoke commit -q -m "chore: initial laravel skeleton"; }
+    [[ -d .git ]] || { git init -q; stage_smoke_files; git -c user.email=smoke@test -c user.name=smoke commit -q -m "chore: initial laravel skeleton"; }
 
     composer require laravel/boost --dev
 

@@ -107,11 +107,10 @@ mkdir -p "$DEST/.cert"
 mkdir -p "$DEST/.git-crypt-keys"
 
 cat > "$DEST/.cert/.gitignore" <<'EOF'
-# Keep certs versioned (encrypted via git-crypt once init-project enables it).
-# Ignore local-only and temporary files.
-*.local
-*.tmp
-*~
+# Ignore certificates by default. Force-add only after git-crypt is initialized
+# and `git-crypt status -e` confirms encrypted staged blobs.
+*
+!.gitignore
 EOF
 
 cat > "$DEST/.git-crypt-keys/.gitignore" <<'EOF'
@@ -125,6 +124,9 @@ cat > "$DEST/.gitattributes" <<'EOF'
 # Uncomment after running `git-crypt init` (handled by /init-project).
 
 # .env       filter=git-crypt diff=git-crypt
+# .env.testing filter=git-crypt diff=git-crypt
+# auth.json  filter=git-crypt diff=git-crypt
+# .npmrc     filter=git-crypt diff=git-crypt
 # .cert/cert.key filter=git-crypt diff=git-crypt
 # .cert/cert.pem filter=git-crypt diff=git-crypt
 
@@ -137,8 +139,25 @@ node_modules/
 vendor/
 
 # Environment
+.env
+.env.*
+!.env.example
 .env.local
 .env.*.local
+auth.json
+.npmrc
+
+# Local secrets and certificates
+.cert/*
+!.cert/.gitignore
+.git-crypt-keys/*
+!.git-crypt-keys/.gitignore
+*.key
+*.pem
+*credential*
+*credentials*
+*secret*
+*secrets*
 
 # OS
 .DS_Store
@@ -177,7 +196,7 @@ This project has the AI-first scaffold but no stack-specific setup yet.
 ## Layout
 
 - \`.agents/skills/\` — opencode skills bundled with this project
-- \`.cert/\` — TLS / signing certificates (encrypted in git once git-crypt is enabled)
+- \`.cert/\` — TLS / signing certificates (ignored by default; force-add only after git-crypt validation)
 - \`.git-crypt-keys/\` — directory for the symmetric key (keys themselves are gitignored)
 - \`.gitattributes\` — git-crypt filter templates (commented)
 EOF
@@ -206,7 +225,7 @@ COMMIT_SHA=""
 REMOTE_URL=""
 
 if [[ "$COMMIT" == "1" ]]; then
-  git add -A
+  git add -- README.md .agents .cert/.gitignore .git-crypt-keys/.gitignore .gitattributes .gitignore
   git commit -m "chore: initial scaffold from ai-first-kit (pack=$PACK)" >/dev/null
   COMMIT_SHA="$(git rev-parse --short HEAD)"
 

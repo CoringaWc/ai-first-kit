@@ -34,10 +34,12 @@ Esta skill **não**:
 
 ## Quick Reference
 
+- Para `vite.config.js`, HMR, Echo ou `resources/js/echo.js`, seguir `vite-reverb-nginx-routing` antes de editar.
 - 3 grupos de `npm install`: build (vite + tailwindcss v4 + plugin), realtime client (laravel-echo + pusher-js + axios), testing (playwright dev-only).
-- 1 `npx playwright install --with-deps chromium` **obrigatório** após instalar Playwright (~150MB em `node_modules/playwright/.local-browsers/` dentro do container). `--with-deps` garante libs APT necessárias caso o Dockerfile evolua sem alguma.
+- 1 instalação de Chromium após instalar Playwright (~150MB). Tente `--with-deps`; se falhar por permissão/`su` no container não-root, use fallback sem `--with-deps`, porque as libs SO já vêm do Dockerfile canônico.
 - Tailwind v4 não usa `tailwind.config.js`; configuração vive em `@theme` dentro do CSS. Theme do Filament em `resources/css/filament/admin/theme.css`.
-- `vite.config.js` recebe input do theme Filament + plugin `@tailwindcss/vite` + bloco `server.hmr` ajustado para Sail (porta 5173, host `0.0.0.0`).
+- `vite.config.js` recebe input do theme Filament + plugin `@tailwindcss/vite` + `base: '/vite/'`; o browser acessa HMR apenas por `https://<dominio>/vite`, via Nginx.
+- Echo/Reverb usa `wsPath: '/ws'`; `/app` fica livre para futuro painel Filament.
 - Append idempotente em `.env.example` das chaves Vite (`VITE_REVERB_*`, `VITE_APP_NAME`).
 - Build final (`npm run build`) precisa sair com exit 0 antes do commit.
 
@@ -75,16 +77,37 @@ vendor/bin/sail npm install --no-fund --no-audit \
 
 - [ ] Confirmar que Filament gerou o theme em `composer-dep-install`: `ls resources/css/filament/admin/theme.css` (não sobrescrever; se faltar, `composer-dep-install` não rodou completo).
 
-- [ ] Aplicar `vite.config.js` template (idempotente — guarda por sentinela `@tailwindcss/vite`):
+- [ ] Aplicar `vite.config.js` template (idempotente — guarda por sentinelas do roteamento `/vite` e do tema Filament):
 
 ```bash
-if ! grep -q "@tailwindcss/vite" vite.config.js 2>/dev/null; then
+if ! grep -q "base: '/vite/'" vite.config.js 2>/dev/null \
+   || ! grep -q "resources/css/filament/admin/theme.css" vite.config.js 2>/dev/null; then
   [[ -f vite.config.js ]] && cp vite.config.js vite.config.js.bak
   cp .agents/skills/npm-dep-install/templates/vite.config.js vite.config.js
 fi
 ```
 
-> O template inclui: input do theme Filament, plugin `@tailwindcss/vite` (Tailwind v4 não usa PostCSS) e bloco `server` com HMR para Sail (`0.0.0.0` + polling).
+> O template inclui: input do theme Filament, plugin `@tailwindcss/vite` (Tailwind v4 não usa PostCSS), `base: '/vite/'` e HMR WSS atrás do Nginx em `/vite/vite-hmr`.
+
+- [ ] Garantir que Echo use o path público `/ws` e que `resources/js/app.js` importe o client:
+
+```bash
+vendor/bin/sail php <<'PHP'
+$echoPath = "resources/js/echo.js";
+$echo = file_get_contents($echoPath);
+if (! str_contains($echo, "wsPath:")) {
+    $echo = str_replace("wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,", "wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,\n    wsPath: '/ws',", $echo);
+}
+$echo = str_replace("enabledTransports: ['ws', 'wss'],", "enabledTransports: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https' ? ['wss'] : ['ws'],", $echo);
+file_put_contents($echoPath, $echo);
+
+$appPath = "resources/js/app.js";
+$app = file_get_contents($appPath);
+if (! str_contains($app, "import './echo';")) {
+    file_put_contents($appPath, rtrim($app)."\n\nimport './echo';\n");
+}
+PHP
+```
 
 ### Passo 5 — Append idempotente em `.env.example`
 
@@ -111,13 +134,14 @@ fi
 vendor/bin/sail npm install --save-dev --no-fund --no-audit playwright
 ```
 
-- [ ] Baixar Chromium + libs SO dentro do container (libs base já vieram do Dockerfile; `--with-deps` cobre evoluções futuras):
+- [ ] Baixar Chromium dentro do container. Primeiro tente com deps; se o container não-root bloquear `apt`/`su`, faça fallback sem deps e force o browser para `node_modules`:
 
 ```bash
-vendor/bin/sail npx playwright install --with-deps chromium
+vendor/bin/sail npx playwright install --with-deps chromium || \
+  PLAYWRIGHT_BROWSERS_PATH=0 vendor/bin/sail npx playwright install chromium
 ```
 
-> ~150MB. Binário cai em `/var/www/html/node_modules/playwright/.local-browsers/chromium-*` (ou `~/.cache/ms-playwright/` do usuário `sail` — ambos dentro do container).
+> ~150MB. Com `PLAYWRIGHT_BROWSERS_PATH=0`, o binário cai em `/var/www/html/node_modules/playwright/.local-browsers/chromium-*`, que é mais fácil de versionar como verificação local (sem commitar `node_modules`).
 
 ### Passo 7 — Build de verificação
 
@@ -142,6 +166,7 @@ git commit -m "feat(deps): instala stack node canônica (vite + tailwind v4 + ec
 
 - ❌ **Não esquecer `resources/css/filament/admin/theme.css` no `input` do Vite.** Sem isso, Filament carrega o tema base do CDN e qualquer customização local some — sintoma é painel "quase certo" mas com cores erradas, e o debug demora porque `npm run build` passa sem erro.
 - ❌ **Não rodar `npx playwright install --with-deps chromium` fora do container.** Os browsers caem em `~/.cache/ms-playwright/` do host, que não está montado no container `app` — `pest` browser test acusa `Executable doesn't exist` mesmo com Playwright instalado. Sempre via `vendor/bin/sail npx playwright install`.
+- ❌ **Não insistir em `--with-deps` se falhar com `su: Authentication failure`.** Esse erro vem do instalador tentando usar privilégios dentro de um container não-root; use o fallback sem deps porque as libs já fazem parte da imagem.
 - ❌ **Não tentar usar `tailwind.config.js` em Tailwind v4.** v4 abandonou o config JS em favor de `@theme` dentro do CSS. Manter `tailwind.config.js` legado causa regras não aplicadas e warnings silenciosos.
 - ❌ **Não rodar `npm install` no host.** Reproduz o mesmo problema de `composer` no host: `node_modules/` ganha binários para a arquitetura e kernel do host e `npm run dev` no container quebra com erros de `node-gyp` ou módulos nativos.
 - ❌ **Não commitar `node_modules/`.** Garantir que `.gitignore` (gerado pelo skeleton Laravel) já cobre. Conferir `git status` antes do commit do Passo 8.
@@ -153,7 +178,8 @@ git commit -m "feat(deps): instala stack node canônica (vite + tailwind v4 + ec
 - [ ] `vendor/bin/sail npm run build` exit 0 e gera `public/build/manifest.json`
 - [ ] `vendor/bin/sail ls node_modules/playwright/.local-browsers/ 2>/dev/null | grep -q chromium` retorna 0
 - [ ] `grep -c "^VITE_REVERB_" .env.example` ≥ 4
-- [ ] `grep -q "@tailwindcss/vite" vite.config.js` retorna 0
+- [ ] `grep -q "base: '/vite/'" vite.config.js` retorna 0
+- [ ] `grep -q "wsPath: '/ws'" resources/js/echo.js` retorna 0
 - [ ] `git log --oneline -1` mostra commit `feat(deps): instala stack node canônica…`
 
 ## Related
@@ -164,3 +190,4 @@ git commit -m "feat(deps): instala stack node canônica (vite + tailwind v4 + ec
 - Orquestradora: `init-project`
 - Template: `.agents/skills/npm-dep-install/templates/vite.config.js`
 - Helper SO/Node/Chromium: `.agents/skills/_shared/docker-base-deps.md`
+- Roteamento Vite/Reverb: `vite-reverb-nginx-routing`

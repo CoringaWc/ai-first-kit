@@ -46,9 +46,9 @@ assert_container_running() {
 }
 
 assert_ssl_stack_ready() {
-    assert_file docker/nginx/certs/cert.pem
-    assert_file docker/nginx/certs/cert.key
-    assert_grep "docker/nginx/certs" docker-compose.yml
+    assert_file .cert/cert.pem
+    assert_file .cert/cert.key
+    assert_grep ".cert" docker-compose.yml
 
     if grep -q "siasgfacil" docker/nginx/default.conf; then
         echo "  ASSERT FAIL: nginx config contains hard-coded legacy domain" >&2

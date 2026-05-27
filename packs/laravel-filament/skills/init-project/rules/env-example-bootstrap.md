@@ -64,6 +64,11 @@ Reaplique este bloco depois de copiar o skeleton Laravel do container, porque `c
 [ -f .env.testing ] || cp .env.example .env.testing
 sed -i 's/^APP_ENV=.*/APP_ENV=testing/' .env.testing
 sed -i 's/^DB_DATABASE=.*/DB_DATABASE=testing/' .env.testing
+if grep -q '^APP_KEY=' .env.testing; then
+  sed -i 's#^APP_KEY=.*#APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=#' .env.testing
+else
+  printf 'APP_KEY=base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=\n' >> .env.testing
+fi
 ```
 
 ## Convenções para skills downstream

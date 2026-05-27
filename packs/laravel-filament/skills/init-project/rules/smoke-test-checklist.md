@@ -30,7 +30,7 @@ Expected: `127.0.0.1 <seu-dominio>.test`. Se vazio: A3 (`ssl-local-dev`) não ad
 curl -v https://${DOMAIN} 2>&1 | grep -i "ssl\|certificate"
 ```
 
-Se erro de cert: re-rodar `mkcert -install && mkcert ${DOMAIN} "*.test"` e mover para `docker/nginx/certs/`.
+Se erro de cert: re-rodar `mkcert -install && mkcert ${DOMAIN} "*.test"` e mover para `.cert/`.
 
 ## 4. Nginx encontra upstream?
 
@@ -46,15 +46,19 @@ Se erro: revisar `docker/nginx/default.conf` — `fastcgi_pass app:9000` (fpm) o
 vendor/bin/sail artisan migrate:status
 ```
 
-Se nenhuma rodou: `vendor/bin/sail artisan migrate --force`.
+Se nenhuma rodou: `vendor/bin/sail artisan migrate --force --no-interaction`.
+
+Sintoma comum: `/up` retorna 200, mas `/` retorna 500 com `relation "sessions" does not exist`. Causa: `SESSION_DRIVER=database` sem migrations aplicadas.
 
 ## 6. APP_KEY gerado?
 
 ```bash
-grep APP_KEY .env
+grep -q '^APP_KEY=base64:' .env && echo 'APP_KEY presente'
 ```
 
 Se vazio: `vendor/bin/sail artisan key:generate`.
+
+Para testes, `.env.testing` também precisa conter `APP_KEY=base64:...`; sem isso `vendor/bin/sail artisan test` falha com `No application encryption key has been specified.`.
 
 ## 7. Logs Laravel
 

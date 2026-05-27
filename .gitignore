@@ -7,3 +7,20 @@
 # Logs e temporários
 *.log
 tmp/
+
+# Segredos locais
+.env
+.env.*
+!.env.example
+.npmrc
+auth.json
+.cert/*
+!.cert/.gitignore
+.git-crypt-keys/*
+!.git-crypt-keys/.gitignore
+*.key
+*.pem
+*credential*
+*credentials*
+*secret*
+*secrets*

@@ -18,7 +18,7 @@ metadata:
 
 ## Consistency First
 
-Se `docker/nginx/certs/cert.pem` e `docker/nginx/certs/cert.key` já existem, **não regenerar** — apenas validar e adicionar entry no `/etc/hosts` se faltar.
+Se `.cert/cert.pem` e `.cert/cert.key` já existem, **não regenerar** — apenas validar e adicionar entry no `/etc/hosts` se faltar.
 
 A skill **assume**:
 
@@ -30,7 +30,7 @@ A skill **assume**:
 
 - `mkcert -install` adiciona CA local trusted; certs gerados são aceitos pelo browser sem warning.
 - Domínio padrão: `<project-name>.test` (TLD reservado IETF, seguro contra HSTS).
-- Certs persistem em `docker/nginx/certs/cert.pem` + `docker/nginx/certs/cert.key` (montados pelo nginx em `/etc/nginx/ssl/`).
+- Certs persistem em `.cert/cert.pem` + `.cert/cert.key` (montados pelo nginx em `/etc/nginx/ssl/`).
 - Append idempotente em `.env`: `APP_URL=https://...`, `FORCE_HTTPS=true`, `SESSION_SECURE_COOKIE=true`, `ASSET_URL=https://...`.
 - Se runtime for Octane: também grava `OCTANE_HTTPS=true` (faz Octane gerar URLs HTTPS por trás do nginx terminador TLS).
 - Idempotente: sempre safe rerodar.
@@ -45,7 +45,7 @@ A skill **assume**:
 ```bash
 PROJECT_NAME="${PROJECT_NAME:-$(basename "$PWD")}"
 DOMAIN="${DOMAIN:-${PROJECT_NAME}.test}"
-CERT_DIR="docker/nginx/certs"
+CERT_DIR=".cert"
 CERT_FILE="${CERT_DIR}/cert.pem"
 KEY_FILE="${CERT_DIR}/cert.key"
 ```
@@ -157,7 +157,7 @@ vendor/bin/sail exec nginx nginx -s reload 2>/dev/null || true
 ## Verification
 
 - [ ] `.agents/skills/_helpers/verify-skill.sh .agents/skills/ssl-local-dev/SKILL.md` retorna `OK`
-- [ ] `test -f docker/nginx/certs/cert.pem && test -f docker/nginx/certs/cert.key` retorna 0
+- [ ] `test -f .cert/cert.pem && test -f .cert/cert.key` retorna 0
 - [ ] `getent hosts ${DOMAIN}` retorna `127.0.0.1`
 - [ ] `grep -E "^(APP_URL|FORCE_HTTPS|SESSION_SECURE_COOKIE)=" .env | wc -l` retorna ≥ 3
 - [ ] `curl -kv https://${DOMAIN} 2>&1 | grep -q "subject:"` (cert apresenta CN/subject)

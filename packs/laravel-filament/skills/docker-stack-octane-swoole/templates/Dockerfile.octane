@@ -29,15 +29,24 @@ RUN apt-get install -y --no-install-recommends \
         libcairo2 fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
-# Node 22 LTS (NodeSource) — pinada para reprodutibilidade CI ↔ local
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+# Node 22 LTS (NodeSource) — repositorio assinado sem curl|bash
+RUN mkdir -p /etc/apt/keyrings \
+    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" > /etc/apt/sources.list.d/nodesource.list \
+    && apt-get update \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 # Extensões PHP (swoole já vem na base — NÃO reinstalar via pecl)
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j"$(nproc)" pdo_pgsql pgsql gd intl zip bcmath exif pcntl opcache \
-    && pecl install redis && docker-php-ext-enable redis
+    && if php -m | grep -qi '^redis$'; then \
+        true; \
+    elif pecl list | grep -qi '^redis '; then \
+        docker-php-ext-enable redis; \
+    else \
+        pecl install redis && docker-php-ext-enable redis; \
+    fi
 
 # Composer (imagem oficial, checksum verificado)
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -47,6 +56,10 @@ RUN groupadd --force --gid $WWWGROUP sail \
     && useradd -ms /bin/bash --no-user-group -g $WWWGROUP -u $WWWUSER sail
 
 WORKDIR /var/www/html
+
+COPY docker/php/entrypoint.sh /usr/local/bin/octane-entrypoint
+RUN chmod +x /usr/local/bin/octane-entrypoint
+
 USER sail
 
 EXPOSE 8000
@@ -54,4 +67,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
     CMD php -r "exit(@fsockopen('127.0.0.1', 8000) ? 0 : 1);"
 
+ENTRYPOINT ["octane-entrypoint"]
 CMD ["php", "artisan", "octane:start", "--server=swoole", "--host=0.0.0.0", "--port=8000"]

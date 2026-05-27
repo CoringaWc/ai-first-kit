@@ -26,12 +26,15 @@ A imagem `app` carrega libs do Chromium do SO porque Pest Browser roda dentro do
 
 ## Quick Reference
 
+- Para qualquer alteração em `/vite`, `/ws`, `/app`, HMR, Reverb ou Nginx, aplicar antes `vite-reverb-nginx-routing`.
 - Base: `php:8.4-fpm-bookworm`.
 - Extensões PHP: `pdo_pgsql`, `bcmath`, `gd`, `intl`, `mbstring`, `opcache`, `pcntl`, `redis`, `zip`, `pgsql`.
 - Pacotes Chromium para Playwright: `libnss3`, `libatk1.0-0`, `libatk-bridge2.0-0`, `libcups2`, `libdbus-1-3`, `libdrm2`, `libxkbcommon0`, `libxcomposite1`, `libxdamage1`, `libxfixes3`, `libxrandr2`, `libgbm1`, `libasound2`, `libpangocairo-1.0-0`, `libpango-1.0-0`, `libcairo2`, `fonts-liberation`.
 - Node: instalar via NodeSource pinado em Node 22 (LTS atual).
-- Services: `app`, `queue`, `reverb`, `nginx`, `postgres`, `redis`, `mailpit` (sempre); `minio`, `ollama`, `qdrant` (profiles desligados por padrão).
-- Sem Supervisor dentro do `app`; `queue` e `reverb` têm services próprios com a mesma imagem.
+- Services: `app`, `queue`, `reverb`, `vite`, `nginx`, `postgres`, `redis`, `mailpit` (sempre); `minio`, `ollama`, `qdrant` (profiles desligados por padrão).
+- Sem Supervisor dentro do `app`; `queue`, `reverb` e `vite` têm services próprios com a mesma imagem.
+- Nginx expõe Vite apenas em `/vite/` e Reverb apenas em `/ws/`; não publique a porta `5173` para o browser, bloqueie `/ws/apps/` publicamente e não reserve `/app` para WebSocket.
+- Portas de banco, Redis, Mailpit e serviços opcionais devem bindar em `127.0.0.1` por padrão.
 - `.env` canônico: `DB_HOST=postgres`, `APP_SERVICE=app`, `WWWUSER=1000`, `WWWGROUP=1000`.
 - Build antes do Laravel/Sail existir: `docker compose build app`.
 - Build depois do Sail existir: `vendor/bin/sail build --no-cache`.
@@ -173,6 +176,8 @@ Sinais ruins: imagem `app` sem libs Chromium, compose sem `mbstring`/`intl`, Nod
 - [ ] `docker compose build app` termina sem erro no bootstrap antes do Sail existir.
 - [ ] `vendor/bin/sail build` termina sem erro depois do Laravel/Sail existir.
 - [ ] `vendor/bin/sail up -d` deixa todos os services obrigatórios em `running`.
+- [ ] `docker compose config | grep -q '^  vite:'` retorna 0, e `docker compose config | grep -q '5173:5173'` retorna 1.
+- [ ] `grep -q 'location ^~ /vite/' docker/nginx/default.conf && grep -q 'location ^~ /ws/' docker/nginx/default.conf` retorna 0.
 - [ ] `vendor/bin/sail exec app node --version` retorna `v22.*`.
 - [ ] `vendor/bin/sail exec app php -m | grep -E '^(mbstring|intl|pdo_pgsql|redis|gd|opcache)$'` lista todas as extensões obrigatórias.
 - [ ] `vendor/bin/sail exec app ldconfig -p | grep -E 'libnss3|libdrm2'` confirma libs Chromium presentes.
@@ -185,3 +190,4 @@ Sinais ruins: imagem `app` sem libs Chromium, compose sem `mbstring`/`intl`, Nod
 - `ssl-local-dev` - HTTPS local em domínio `.test`.
 - `npm-dep-install` - Instala Playwright + Chromium dentro do `app`.
 - `docker-stack-octane-swoole` - Stack alternativa com Swoole para projetos novos.
+- `vite-reverb-nginx-routing` - Topologia e segurança para Vite/Reverb atrás do Nginx.

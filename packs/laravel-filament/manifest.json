@@ -1,4 +1,4 @@
 {
   "name": "laravel-filament",
-  "description": "Laravel 12 + Filament v5 + Pest + Octane/Swoole stack with 36 production-tested skills (TDD, scaffolding, docker, CI)."
+  "description": "Laravel 13 + Filament v5 + Pest + Octane/Swoole stack with production-tested skills (TDD, scaffolding, docker, CI)."
 }

@@ -1,6 +1,6 @@
 # laravel-filament
 
-Laravel 12 + Filament v5 + Pest + Octane/Swoole stack with 36 production-tested skills (TDD, scaffolding, docker, CI).
+Laravel 13 + Filament v5 + Pest + Octane/Swoole stack with production-tested skills (TDD, scaffolding, docker, CI).
 
 Battle-tested in the **Processo Migratório TPA Fernando de Noronha** project. Skills cover the full lifecycle: project bootstrap, Filament Resources/Forms/Tables, Pest unit + feature + browser tests, native Laravel policies and Spatie permission policies, Docker FPM and Octane/Swoole stacks, larastan + pint static analysis, and a `verify-before-commit` gate.
 

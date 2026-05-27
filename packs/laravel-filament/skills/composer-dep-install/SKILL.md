@@ -39,6 +39,7 @@ A4 **não**:
 
 ## Quick Reference
 
+- Para Reverb, `REVERB_ALLOWED_ORIGINS`, `REVERB_BROADCAST_*` ou paths públicos de WebSocket, seguir `vite-reverb-nginx-routing` antes de editar.
 - 5 grupos de `composer require` (UI, realtime, dev-tools, testing, i18n), mais Octane opcional quando `OCTANE_SERVER=swoole`. Detalhes em `rules/package-list.md`.
 - 1 `filament:install --panels` **obrigatório** após Grupo 1.
 - 1 `install:broadcasting --reverb --without-node --without-reverb` + `reverb:install` após Grupo 2.
@@ -73,6 +74,7 @@ vendor/bin/sail artisan filament:install --panels --no-interaction
 
 ```bash
 vendor/bin/sail composer require laravel/reverb:^1.0
+APP_HOST="$(vendor/bin/sail php -r '$env = parse_ini_file(".env"); echo parse_url($env["APP_URL"] ?? "https://localhost", PHP_URL_HOST) ?: "localhost";')"
 
 if ! grep -q "^REVERB_APP_ID=" .env; then
   REVERB_APP_ID="$(vendor/bin/sail php -r 'echo random_int(100000, 999999);')"
@@ -82,9 +84,13 @@ if ! grep -q "^REVERB_APP_ID=" .env; then
     printf '\nREVERB_APP_ID=%s\n' "$REVERB_APP_ID"
     printf 'REVERB_APP_KEY=%s\n' "$REVERB_APP_KEY"
     printf 'REVERB_APP_SECRET=%s\n' "$REVERB_APP_SECRET"
-    printf 'REVERB_HOST="localhost"\n'
-    printf 'REVERB_PORT=8080\n'
-    printf 'REVERB_SCHEME=http\n'
+    printf 'REVERB_HOST=%s\n' "$APP_HOST"
+    printf 'REVERB_PORT=443\n'
+    printf 'REVERB_SCHEME=https\n'
+    printf 'REVERB_ALLOWED_ORIGINS=%s\n' "$APP_HOST"
+    printf 'REVERB_BROADCAST_HOST=reverb\n'
+    printf 'REVERB_BROADCAST_PORT=8080\n'
+    printf 'REVERB_BROADCAST_SCHEME=http\n'
   } >> .env
 fi
 
@@ -101,11 +107,48 @@ if ! grep -q "^REVERB_APP_ID=" .env.example; then
     printf 'REVERB_APP_ID=\n'
     printf 'REVERB_APP_KEY=\n'
     printf 'REVERB_APP_SECRET=\n'
-    printf 'REVERB_HOST="localhost"\n'
-    printf 'REVERB_PORT=8080\n'
-    printf 'REVERB_SCHEME=http\n'
+    printf 'REVERB_HOST=\n'
+    printf 'REVERB_PORT=443\n'
+    printf 'REVERB_SCHEME=https\n'
+    printf 'REVERB_ALLOWED_ORIGINS=\n'
+    printf 'REVERB_BROADCAST_HOST=reverb\n'
+    printf 'REVERB_BROADCAST_PORT=8080\n'
+    printf 'REVERB_BROADCAST_SCHEME=http\n'
   } >> .env.example
 fi
+```
+
+- [ ] Ajustar configs Reverb para separar endereço público (`REVERB_HOST`, `REVERB_PORT`, `REVERB_SCHEME`) do destino interno usado pelo Laravel para publicar mensagens:
+
+```bash
+vendor/bin/sail php <<'PHP'
+$path = "config/broadcasting.php";
+$content = file_get_contents($path);
+$content = str_replace("'host' => env('REVERB_HOST'),", "'host' => env('REVERB_BROADCAST_HOST', env('REVERB_HOST')),", $content);
+$content = str_replace("'port' => env('REVERB_PORT', 443),", "'port' => env('REVERB_BROADCAST_PORT', env('REVERB_PORT', 443)),", $content);
+$content = str_replace("'scheme' => env('REVERB_SCHEME', 'https'),", "'scheme' => env('REVERB_BROADCAST_SCHEME', env('REVERB_SCHEME', 'https')),", $content);
+$content = str_replace("'useTLS' => env('REVERB_SCHEME', 'https') === 'https',", "'useTLS' => env('REVERB_BROADCAST_SCHEME', env('REVERB_SCHEME', 'https')) === 'https',", $content);
+file_put_contents($path, $content);
+PHP
+```
+
+- [ ] Restringir origens permitidas do Reverb ao domínio configurado em `REVERB_ALLOWED_ORIGINS`:
+
+```bash
+vendor/bin/sail php <<'PHP'
+$path = "config/reverb.php";
+$content = file_get_contents($path);
+$search = "'allowed_origins' => ['*'],";
+$replace = "'allowed_origins' => array_values(array_filter(array_map(\n                    'trim',\n                    explode(',', env('REVERB_ALLOWED_ORIGINS', env('REVERB_HOST', ''))),\n                ))),";
+$updated = str_replace($search, $replace, $content);
+
+if ($updated === $content || str_contains($updated, $search)) {
+    fwrite(STDERR, "Nao encontrei allowed_origins padrao em config/reverb.php ou wildcard permaneceu.\n");
+    exit(1);
+}
+
+file_put_contents($path, $updated);
+PHP
 ```
 
 ### Passo 3.5 — Instalar Octane quando profile=octane
@@ -208,4 +251,5 @@ vendor/bin/sail artisan vendor:publish --tag=filament-config --no-interaction
 - Skills upstream/downstream: `docker-stack-fpm`, `docker-stack-octane-swoole`, `ssl-local-dev`, `npm-dep-install`, `translation`
 - Orquestradora: `init-project`
 - Rules: `rules/package-list.md`
+- Roteamento Vite/Reverb: `vite-reverb-nginx-routing`
 - Doutrina i18n: `.agents/skills/translation/rules/translation-rules.md`

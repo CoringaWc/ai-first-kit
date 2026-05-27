@@ -31,21 +31,21 @@ done
 3. **Re-rodar boost interactive APENAS para opencode dentro do container**:
 
 ```bash
-vendor/bin/sail artisan boost:install --only=opencode
+vendor/bin/sail artisan boost:install --guidelines --skills --mcp --no-interaction
 ```
 
-Se a flag `--only` não existir nesta versão do Boost (verificar com `vendor/bin/sail artisan boost:install --help`), rodar interativo dentro do container e desmarcar todos os outros explicitamente.
+Antes de rodar, garanta que `boost.json` contenha `"agents": ["opencode"]`. Se esta versão do Boost não respeitar o arquivo em modo não-interativo, rodar interativo dentro do container e desmarcar todos os outros explicitamente.
 
 4. **Validar resultado**:
 
 ```bash
-ls -la .github/skills/ AGENTS.md opencode.jsonc 2>&1 | head -20
+ls -la .github/skills/ AGENTS.md opencode.json opencode.jsonc 2>&1 | head -20
 ```
 
 Expected:
 - `.github/skills/` populado com skills Boost
 - `AGENTS.md` contém `<laravel-boost-guidelines>`
-- `opencode.jsonc` existe (Boost cria/atualiza para OpenCode)
+- `opencode.json` ou `opencode.jsonc` existe (Boost cria/atualiza para OpenCode, conforme versão)
 
 ## Retomada da skill init-project
 

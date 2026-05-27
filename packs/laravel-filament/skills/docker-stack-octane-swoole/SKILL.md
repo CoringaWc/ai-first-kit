@@ -26,12 +26,15 @@ Se já existe `docker-compose.yml` customizado (sem o header desta skill e sem m
 
 ## Quick Reference
 
+- Para qualquer alteração em `/vite`, `/ws`, `/app`, HMR, Reverb ou Nginx, aplicar antes `vite-reverb-nginx-routing`.
 - Base: `phpswoole/swoole:php8.4`.
 - Comando do `app`: `php artisan octane:start --server=swoole --host=0.0.0.0 --port=8000`.
 - Hot reload em dev: variável `OCTANE_WATCH=true` lida pelo entrypoint condicional; adiciona `--watch` ao comando.
-- Services obrigatórios: `app`, `queue`, `reverb`, `nginx`, `postgres`, `redis`, `mailpit`.
+- Services obrigatórios: `app`, `queue`, `reverb`, `vite`, `nginx`, `postgres`, `redis`, `mailpit`.
 - Services opcionais (profiles desligados por padrão): `minio`, `ollama`, `qdrant`.
-- Mesma imagem em `app`/`queue`/`reverb` com comandos diferentes; sem Supervisor.
+- Mesma imagem em `app`/`queue`/`reverb`/`vite` com comandos diferentes; sem Supervisor.
+- Nginx expõe Vite apenas em `/vite/` e Reverb apenas em `/ws/`; não publique a porta `5173` para o browser, bloqueie `/ws/apps/` publicamente e não reserve `/app` para WebSocket.
+- Portas de banco, Redis, Mailpit e serviços opcionais devem bindar em `127.0.0.1` por padrão.
 - Env vars Octane: `OCTANE_SERVER=swoole`, `OCTANE_HTTPS=true`, `OCTANE_MAX_REQUESTS=500`, `OCTANE_WATCH=false` (dev pode ligar).
 - `.env` canônico: `DB_HOST=postgres`, `APP_SERVICE=app`, `WWWUSER=1000`, `WWWGROUP=1000`.
 - Build antes do Laravel/Sail existir: `docker compose build app`.
@@ -173,6 +176,8 @@ Sinais ruins: base errada, comando do `app` sem `--host=0.0.0.0`, ausência de e
 - [ ] `docker compose build app` termina sem erro no bootstrap antes do Sail existir.
 - [ ] `vendor/bin/sail build` termina sem erro depois do Laravel/Sail existir.
 - [ ] `vendor/bin/sail up -d` deixa todos os services obrigatórios em `running`.
+- [ ] `docker compose config | grep -q '^  vite:'` retorna 0, e `docker compose config | grep -q '5173:5173'` retorna 1.
+- [ ] `grep -q 'location ^~ /vite/' docker/nginx/default.conf && grep -q 'location ^~ /ws/' docker/nginx/default.conf` retorna 0.
 - [ ] `vendor/bin/sail exec app php -m | grep -x swoole` retorna `swoole`.
 - [ ] `vendor/bin/sail exec app php -m | grep -E '^(mbstring|intl|pdo_pgsql|redis|gd|opcache)$'` lista todas as extensões obrigatórias.
 - [ ] `vendor/bin/sail exec app node --version` retorna `v22.*`.
@@ -184,6 +189,7 @@ Sinais ruins: base errada, comando do `app` sem `--host=0.0.0.0`, ausência de e
 - `_shared/docker-base-deps.md` - Lista canônica de SO, Node, Chromium libs e extensões PHP.
 - `rules/octane-safety-checklist.md` - Riscos de state-leak e packages incompatíveis.
 - `docker-stack-fpm` - Stack alternativa em PHP-FPM.
+- `vite-reverb-nginx-routing` - Topologia e segurança para Vite/Reverb atrás do Nginx.
 - `enable-octane-swoole` - Migração opt-in de projeto FPM existente.
 - `init-project` - Skill mestra que invoca esta stack quando o perfil é Octane.
 - Doc oficial: https://laravel.com/docs/octane

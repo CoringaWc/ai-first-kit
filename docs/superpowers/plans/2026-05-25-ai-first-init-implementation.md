@@ -160,12 +160,12 @@ resolve_kit_dir() {
 Run:
 
 ```bash
-cd /home/coringawc/ai-first-kit
+cd /home/coringawc/projects/ai-first-kit
 unset AFK_KIT_DIR
 bash -c 'source scripts/lib/kit-dir.sh && resolve_kit_dir && echo "RESOLVED=$AFK_KIT_DIR"'
 ```
 
-Expected: prints `RESOLVED=/home/coringawc/ai-first-kit` (because cwd fallback works — this repo IS a kit).
+Expected: prints `RESOLVED=/home/coringawc/projects/ai-first-kit` (because cwd fallback works — this repo IS a kit).
 
 Run:
 
@@ -293,12 +293,12 @@ chmod +x scripts/create-pack.sh
 - [ ] **Step 3: Smoke test — success path**
 
 ```bash
-cd /home/coringawc/ai-first-kit
+cd /home/coringawc/projects/ai-first-kit
 AFK_KIT_DIR="$(pwd)" AFK_PACK_NAME=smoketest AFK_PACK_DESC="smoke test pack" \
   bash scripts/create-pack.sh
 ```
 
-Expected last line of stdout: `{"dest": "/home/coringawc/ai-first-kit/packs/smoketest", "name": "smoketest"}`
+Expected last line of stdout: `{"dest": "/home/coringawc/projects/ai-first-kit/packs/smoketest", "name": "smoketest"}`
 
 Verify:
 ```bash
@@ -653,7 +653,7 @@ COMMIT_SHA=""
 REMOTE_URL=""
 
 if [[ "$COMMIT" == "1" ]]; then
-  git add -A
+  git add -- README.md .agents .cert/.gitignore .git-crypt-keys/.gitignore .gitattributes .gitignore
   git commit -m "chore: initial scaffold from ai-first-kit (pack=$PACK)" >/dev/null
   COMMIT_SHA="$(git rev-parse --short HEAD)"
 
@@ -692,7 +692,7 @@ chmod +x scripts/init-project.sh
 Set up a fixture pack in the local kit:
 
 ```bash
-cd /home/coringawc/ai-first-kit
+cd /home/coringawc/projects/ai-first-kit
 AFK_KIT_DIR="$(pwd)" AFK_PACK_NAME=fixture AFK_PACK_DESC="fixture for init-project smoke test" \
   bash scripts/create-pack.sh
 echo "stub skill" > packs/fixture/skills/sentinel.md
@@ -734,7 +734,7 @@ Expected:
 - [ ] **Step 4: Smoke test — destination already non-empty**
 
 ```bash
-cd /home/coringawc/ai-first-kit
+cd /home/coringawc/projects/ai-first-kit
 AFK_KIT_DIR="$(pwd)" \
   AFK_INIT_PACK=fixture \
   AFK_INIT_NAME=demo-proj \
@@ -749,7 +749,7 @@ Expected: error "Destination ... exists and is not empty", `rc=3`.
 - [ ] **Step 5: Smoke test — missing pack**
 
 ```bash
-cd /home/coringawc/ai-first-kit
+cd /home/coringawc/projects/ai-first-kit
 rm -rf /tmp/afk-smoke
 AFK_KIT_DIR="$(pwd)" \
   AFK_INIT_PACK=does-not-exist \
@@ -765,7 +765,7 @@ Expected: error "Pack 'does-not-exist' not found", `rc=5`.
 - [ ] **Step 6: Clean up smoke artifacts**
 
 ```bash
-cd /home/coringawc/ai-first-kit
+cd /home/coringawc/projects/ai-first-kit
 rm -rf packs/fixture /tmp/afk-smoke
 git status
 ```

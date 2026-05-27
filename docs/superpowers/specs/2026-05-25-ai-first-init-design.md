@@ -173,7 +173,7 @@ This lets the skill report back to the user cleanly.
 5. Create scaffold files (see "Scaffold layout" below).
 6. If `<kit>/packs/<pack>/skills/` exists and is non-empty: `cp -R "<kit>/packs/<pack>/skills/." ".agents/skills/"`. Count files for summary.
 7. `git init -b main` (suppress noisy output).
-8. If commit=1: `git add -A && git commit -m "chore: initial scaffold from ai-first-kit (pack=<pack>)"`. Capture short SHA.
+8. If commit=1: stage only scaffold-safe files (`README.md`, `.agents`, `.cert/.gitignore`, `.git-crypt-keys/.gitignore`, `.gitattributes`, `.gitignore`) and commit with `chore: initial scaffold from ai-first-kit (pack=<pack>)`. Capture short SHA.
 9. If push=1 and commit was made: try `gh repo create "<name>" --private --source . --push --remote origin`. Capture remote URL. On failure, keep local commit, log warning, set `remote=null`.
 10. Emit JSON summary to stdout; exit 0.
 
