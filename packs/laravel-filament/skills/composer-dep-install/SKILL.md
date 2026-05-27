@@ -47,6 +47,9 @@ A4 **não**:
 - Em profile Octane, A4 instala `laravel/octane`, roda `octane:install --server=swoole` e reinicia `app`.
 - Grupo 5 instala `lucascudo/laravel-pt-br-localization` — único pacote de i18n permitido pela filosofia do projeto.
 - **Não instala** `spatie/laravel-permission` nem `laravel-lang/lang` — ver Anti-Patterns.
+- Em projetos com entrypoint canônico, a instalação inicial pode ser disparada automaticamente no primeiro `docker compose up -d --build`. Use comandos manuais de Composer quando estiver adicionando/removendo pacotes, recuperando falhas ou validando instalação parcial.
+- Exemplos manuais: adicionar pacote com `vendor/bin/sail composer require vendor/package`; remover pacote com `vendor/bin/sail composer remove vendor/package`; recuperar falha com `vendor/bin/sail composer install`; validar instalação parcial com `vendor/bin/sail composer validate && vendor/bin/sail composer check-platform-reqs`.
+- Antes de handoff, aplique `verify-before-commit` e siga `verify-before-commit/rules/verify-gate.md`: `vendor/bin/sail composer verify` é o gate obrigatório.
 
 ## Workflow
 

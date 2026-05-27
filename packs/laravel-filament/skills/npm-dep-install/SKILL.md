@@ -42,6 +42,9 @@ Esta skill **não**:
 - Echo/Reverb usa `wsPath: '/ws'`; `/app` fica livre para futuro painel Filament.
 - Append idempotente em `.env.example` das chaves Vite (`VITE_REVERB_*`, `VITE_APP_NAME`).
 - Build final (`npm run build`) precisa sair com exit 0 antes do commit.
+- Em projetos com entrypoint canônico, `npm install` pode ser disparado automaticamente quando `node_modules/.install-complete` está ausente e `AUTO_INSTALL_DEPS=true`. Use comandos manuais de npm quando estiver alterando dependências, recuperando falhas ou instalando browsers Playwright sob demanda aprovada.
+- Exemplos manuais: alterar dependências com `vendor/bin/sail npm install pacote --save-dev --no-fund --no-audit`; recuperar falha com `vendor/bin/sail npm install --no-fund --no-audit`; instalar Playwright sob demanda com `PLAYWRIGHT_BROWSERS_PATH=0 vendor/bin/sail npx playwright install chromium`.
+- Antes de handoff, aplique `verify-before-commit` e siga `verify-before-commit/rules/verify-gate.md`: `vendor/bin/sail composer verify` é o gate obrigatório.
 
 ## Workflow
 

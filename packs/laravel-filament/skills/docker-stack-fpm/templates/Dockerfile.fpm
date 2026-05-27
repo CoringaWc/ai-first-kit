@@ -49,8 +49,13 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 RUN groupadd --force --gid $WWWGROUP sail \
     && useradd -ms /bin/bash --no-user-group -g $WWWGROUP -u $WWWUSER sail
 
+COPY docker/php/entrypoint.sh /usr/local/bin/app-entrypoint
+RUN chmod +x /usr/local/bin/app-entrypoint
+
 WORKDIR /var/www/html
 USER sail
+
+ENTRYPOINT ["app-entrypoint"]
 
 EXPOSE 9000
 

@@ -24,6 +24,8 @@ Base image canônica: `phpswoole/swoole:php8.4` (vem com `ext-swoole` compilado)
 
 Se já existe `docker-compose.yml` customizado (sem o header desta skill e sem marcador do Sail), pare e peça confirmação antes de sobrescrever.
 
+O entrypoint da stack instala dependências ausentes em ambiente local quando `AUTO_INSTALL_DEPS=true`: `composer install` quando `vendor/autoload.php` está ausente e `npm install` quando `node_modules/.install-complete` está ausente. Em produção/CI, use `AUTO_INSTALL_DEPS=false` para falhar cedo se as dependências não estiverem pré-instaladas. Se `composer.json` usa o repositório privado do Filament, `auth.json`, `COMPOSER_AUTH` ou auth global do Composer precisa estar disponível antes do Composer.
+
 ## Quick Reference
 
 - Para qualquer alteração em `/vite`, `/ws`, `/app`, HMR, Reverb ou Nginx, aplicar antes `vite-reverb-nginx-routing`.
@@ -39,6 +41,7 @@ Se já existe `docker-compose.yml` customizado (sem o header desta skill e sem m
 - `.env` canônico: `DB_HOST=postgres`, `APP_SERVICE=app`, `WWWUSER=1000`, `WWWGROUP=1000`.
 - Build antes do Laravel/Sail existir: `docker compose build app`.
 - Build depois do Sail existir: `vendor/bin/sail build --no-cache`.
+- Antes de handoff, aplique `verify-before-commit` e siga `verify-before-commit/rules/verify-gate.md`: `vendor/bin/sail composer verify` é o gate obrigatório.
 
 ## Workflow
 

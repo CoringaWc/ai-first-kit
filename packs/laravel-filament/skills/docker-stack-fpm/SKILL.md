@@ -24,6 +24,8 @@ Se já existe `docker-compose.yml` customizado (qualquer compose sem o header de
 
 A imagem `app` carrega libs do Chromium do SO porque Pest Browser roda dentro do próprio container. Não use a imagem oficial do Playwright como base; ela não traz PHP.
 
+O entrypoint da stack instala dependências ausentes em ambiente local quando `AUTO_INSTALL_DEPS=true`: `composer install` quando `vendor/autoload.php` está ausente e `npm install` quando `node_modules/.install-complete` está ausente. Em produção/CI, use `AUTO_INSTALL_DEPS=false` para falhar cedo se as dependências não estiverem pré-instaladas. Se `composer.json` usa o repositório privado do Filament, `auth.json`, `COMPOSER_AUTH` ou auth global do Composer precisa estar disponível antes do Composer.
+
 ## Quick Reference
 
 - Para qualquer alteração em `/vite`, `/ws`, `/app`, HMR, Reverb ou Nginx, aplicar antes `vite-reverb-nginx-routing`.
@@ -39,6 +41,7 @@ A imagem `app` carrega libs do Chromium do SO porque Pest Browser roda dentro do
 - Build antes do Laravel/Sail existir: `docker compose build app`.
 - Build depois do Sail existir: `vendor/bin/sail build --no-cache`.
 - Subir tudo depois do Sail existir: `vendor/bin/sail up -d`.
+- Antes de handoff, aplique `verify-before-commit` e siga `verify-before-commit/rules/verify-gate.md`: `vendor/bin/sail composer verify` é o gate obrigatório.
 
 ## Workflow
 
@@ -93,12 +96,14 @@ if ((${#EXISTING_COMPOSE_FILES[@]} > 0)); then
 fi
 ```
 
-- [ ] Renderizar Dockerfile com `LOCALE_FULL`:
+- [ ] Renderizar Dockerfile e entrypoint com `LOCALE_FULL`:
 
 ```bash
 mkdir -p docker/php docker/nginx
 LOCALE_FULL="${LOCALE_FULL:-${LOCALE:-pt_BR.UTF-8}}"
 sed "s/{{LOCALE}}/$LOCALE_FULL/g" .agents/skills/docker-stack-fpm/templates/Dockerfile.fpm > docker/php/Dockerfile
+cp .agents/skills/docker-stack-fpm/templates/fpm-entrypoint.sh docker/php/entrypoint.sh
+chmod +x docker/php/entrypoint.sh
 ```
 
 - [ ] Renderizar `docker-compose.yml` com `PROJECT_NAME`:

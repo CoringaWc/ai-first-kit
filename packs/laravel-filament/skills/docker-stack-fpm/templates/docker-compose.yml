@@ -11,6 +11,7 @@ services:
     working_dir: /var/www/html
     environment:
       APP_SERVICE: ${APP_SERVICE:-app}
+      AUTO_INSTALL_DEPS: ${AUTO_INSTALL_DEPS:-true}
       WWWGROUP: ${WWWGROUP:-1000}
       WWWUSER: ${WWWUSER:-1000}
     volumes:
@@ -40,6 +41,7 @@ services:
     working_dir: /var/www/html
     environment:
       APP_SERVICE: ${APP_SERVICE:-app}
+      AUTO_INSTALL_DEPS: ${AUTO_INSTALL_DEPS:-true}
       WWWGROUP: ${WWWGROUP:-1000}
       WWWUSER: ${WWWUSER:-1000}
     command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--timeout=900", "--max-time=3600"]
@@ -70,6 +72,7 @@ services:
     working_dir: /var/www/html
     environment:
       APP_SERVICE: ${APP_SERVICE:-app}
+      AUTO_INSTALL_DEPS: ${AUTO_INSTALL_DEPS:-true}
       WWWGROUP: ${WWWGROUP:-1000}
       WWWUSER: ${WWWUSER:-1000}
     command: ["php", "artisan", "reverb:start"]
@@ -98,6 +101,7 @@ services:
     working_dir: /var/www/html
     environment:
       APP_SERVICE: ${APP_SERVICE:-app}
+      AUTO_INSTALL_DEPS: ${AUTO_INSTALL_DEPS:-true}
       WWWGROUP: ${WWWGROUP:-1000}
       WWWUSER: ${WWWUSER:-1000}
     command: ["npm", "run", "dev", "--", "--host=0.0.0.0"]

@@ -44,6 +44,7 @@ Antes de iniciar, esta skill **assume**:
 - Locale fixo: `APP_LOCALE=pt_BR`, `APP_FALLBACK_LOCALE=en`, `APP_FAKER_LOCALE=pt_BR` são gravados pela skill `translation`.
 - Endpoints públicos de dev ficam atrás do Nginx/443: Vite em `/vite/` e Reverb em `/ws/`. Não exponha `5173` no browser e não reserve `/app`, pois esse path fica livre para Filament.
 - Para alterar esse padrão, aplicar `vite-reverb-nginx-routing` antes das skills Docker/npm/composer.
+- Antes de handoff, aplique `verify-before-commit` e siga `verify-before-commit/rules/verify-gate.md`: `vendor/bin/sail composer verify` é o gate obrigatório.
 
 ## Workflow
 

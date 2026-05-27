@@ -27,6 +27,8 @@ Comandos focados (rodar só o teste alterado, só Pint, só Larastan) pertencem 
 
 ## Quick Reference
 
+O contrato resumido do gate fica em `rules/verify-gate.md`; esta skill detalha o workflow operacional e os critérios de bloqueio.
+
 ### Comando único
 
 ```bash
@@ -35,26 +37,7 @@ vendor/bin/sail composer verify
 
 ### Script `composer.json` (contrato canônico)
 
-```json
-"scripts": {
-    "verify": [
-        "@pint",
-        "@stan",
-        "@test:unit",
-        "@test:feature",
-        "@test:browser",
-        "@build"
-    ],
-    "pint": "pint --dirty --format agent",
-    "stan": "phpstan analyse",
-    "test:unit": "@php artisan test --compact --testsuite=Unit",
-    "test:feature": "@php artisan test --compact --testsuite=Feature",
-    "test:browser": "@php artisan test --compact tests/Browser",
-    "build": "npm run build"
-}
-```
-
-`@pint`, `@stan`, etc. referenciam scripts irmãos. `composer` aborta no primeiro retorno ≠ 0. Browser e build entram no contrato porque ambos rodam na CI (`ci-github-actions`).
+O `composer.json` atual do projeto é a fonte canônica dos comandos completos. Neste contrato, `verify` encadeia `@pint`, `@stan`, `@test:unit`, `@test:feature`, `@test:browser` e `@build`; `composer` aborta no primeiro retorno ≠ 0. Browser e build entram no contrato porque ambos rodam na CI (`ci-github-actions`).
 
 ### Gates encadeados
 
