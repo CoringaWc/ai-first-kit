@@ -34,6 +34,8 @@ Se já existe `docker-compose.yml` customizado (sem o header desta skill e sem m
 - Mesma imagem em `app`/`queue`/`reverb` com comandos diferentes; sem Supervisor.
 - Env vars Octane: `OCTANE_SERVER=swoole`, `OCTANE_HTTPS=true`, `OCTANE_MAX_REQUESTS=500`, `OCTANE_WATCH=false` (dev pode ligar).
 - `.env` canônico: `DB_HOST=postgres`, `APP_SERVICE=app`, `WWWUSER=1000`, `WWWGROUP=1000`.
+- Build antes do Laravel/Sail existir: `docker compose build app`.
+- Build depois do Sail existir: `vendor/bin/sail build --no-cache`.
 
 ## Workflow
 
@@ -139,10 +141,14 @@ done
 
 - [ ] Revisar `rules/octane-safety-checklist.md` antes de subir (singletons, static props, Auth no boot, packages problemáticos).
 
-- [ ] Build:
+- [ ] Build. Quando invocada por `init-project` antes do Laravel existir, use Docker Compose direto. Em projeto Laravel já instalado, use Sail:
 
 ```bash
-vendor/bin/sail build --no-cache
+if [[ -x vendor/bin/sail ]]; then
+  vendor/bin/sail build --no-cache
+else
+  docker compose build app
+fi
 ```
 
 - [ ] Services opcionais (`minio`, `ollama`, `qdrant`) via `profiles:`. Para subir: `COMPOSE_PROFILES=ollama vendor/bin/sail up -d`.
@@ -164,7 +170,8 @@ Sinais ruins: base errada, comando do `app` sem `--host=0.0.0.0`, ausência de e
 ## Verification
 
 - [ ] `./.agents/skills/_helpers/verify-skill.sh .agents/skills/docker-stack-octane-swoole/SKILL.md`
-- [ ] `vendor/bin/sail build` termina sem erro.
+- [ ] `docker compose build app` termina sem erro no bootstrap antes do Sail existir.
+- [ ] `vendor/bin/sail build` termina sem erro depois do Laravel/Sail existir.
 - [ ] `vendor/bin/sail up -d` deixa todos os services obrigatórios em `running`.
 - [ ] `vendor/bin/sail exec app php -m | grep -x swoole` retorna `swoole`.
 - [ ] `vendor/bin/sail exec app php -m | grep -E '^(mbstring|intl|pdo_pgsql|redis|gd|opcache)$'` lista todas as extensões obrigatórias.

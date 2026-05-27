@@ -1,24 +1,35 @@
 # Pré-requisitos — init-project (A1)
 
-Os Passos 0 e 1 rodam **no host** (antes do Sail existir). A partir do Passo 5 (A2+), comandos rodam dentro de containers Sail.
+`init-project` é **Docker-first**. O host prepara e executa Docker; a aplicação prepara PHP, Composer, Artisan, Node, npm e npx dentro do container `app`.
 
-## Host (obrigatório antes de iniciar)
+## Host obrigatório antes de iniciar
 
-- **PHP ≥ 8.4** instalado no host (`composer create-project` e `php artisan boost:install` rodam aqui)
-- **Composer 2.x**
-- **Docker** + **docker-compose** (usados a partir de A2)
-- **git** configurado
+- **Docker Engine/Daemon acessível** (`docker info` precisa funcionar).
+- **Docker Compose v2** (`docker compose version`) ou fallback `docker-compose`.
+- **git** configurado.
+- **curl** para smoke test final.
+- **mkcert** ou **openssl** opcionais para HTTPS local; sem `mkcert`, `ssl-local-dev` usa self-signed quando possível.
+
+## Host explicitamente não exigido
+
+- PHP no host.
+- Composer no host.
+- Node, npm ou npx no host.
+- Laravel installer no host.
+
+Mesmo se essas ferramentas existirem no host, **não use**. Elas criam `vendor/`, `node_modules/`, caches e binários fora da imagem canônica e quebram a reprodutibilidade Docker.
 
 ## Verificação rápida
 
 ```bash
-php -v | grep -qE "PHP 8\.(4|5|6)" || { echo "ERRO: host PHP precisa ser 8.4+"; exit 1; }
-composer --version | grep -q "Composer version 2" || { echo "ERRO: Composer 2.x necessário"; exit 1; }
-docker --version >/dev/null 2>&1 || { echo "ERRO: docker ausente"; exit 1; }
 docker compose version >/dev/null 2>&1 || docker-compose --version >/dev/null 2>&1 || { echo "ERRO: docker compose ausente"; exit 1; }
+docker info >/dev/null 2>&1 || { echo "ERRO: Docker daemon indisponível. Inicie Docker Desktop/Engine e habilite integração WSL se aplicável."; exit 1; }
 git --version >/dev/null 2>&1 || { echo "ERRO: git ausente"; exit 1; }
+curl --version >/dev/null 2>&1 || { echo "ERRO: curl ausente"; exit 1; }
 ```
 
-## Após A2
+## Ordem de ferramentas
 
-A partir de `docker-stack-fpm` / `docker-stack-octane-swoole`, todos os comandos PHP/Composer/Node passam por `vendor/bin/sail`. O host só precisa de Docker e git daí em diante.
+- Antes do Laravel existir: use `docker compose build` e `docker compose run`.
+- Depois de instalar `laravel/sail`: use `vendor/bin/sail` para tudo que envolva PHP, Composer, Artisan, Node ou npm.
+- Nunca rode `composer create-project`, `composer require`, `php artisan`, `npm install` ou `npx` diretamente no host.

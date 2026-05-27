@@ -1,6 +1,6 @@
 # Boost Install — Fallback Manual
 
-Se `php artisan boost:install` travar ou o usuário marcar harness errado:
+Se `vendor/bin/sail artisan boost:install` travar ou o usuário marcar harness errado:
 
 ## Recuperação
 
@@ -28,13 +28,13 @@ done
 
 2. **Verificar AGENTS.md**: deve existir com bloco `<laravel-boost-guidelines>` apenas para opencode. Se contiver tags de outros harnesses, abrir editor e remover seções marcadas.
 
-3. **Re-rodar boost interactive APENAS para opencode**:
+3. **Re-rodar boost interactive APENAS para opencode dentro do container**:
 
 ```bash
-php artisan boost:install --only=opencode
+vendor/bin/sail artisan boost:install --only=opencode
 ```
 
-Se a flag `--only` não existir nesta versão do Boost (verificar com `--help`), rodar interativo e desmarcar todos os outros explicitamente.
+Se a flag `--only` não existir nesta versão do Boost (verificar com `vendor/bin/sail artisan boost:install --help`), rodar interativo dentro do container e desmarcar todos os outros explicitamente.
 
 4. **Validar resultado**:
 
@@ -50,6 +50,6 @@ Expected:
 ## Retomada da skill init-project
 
 ```bash
-# Pular o passo 1 (boost) na re-execução:
-# Invocar init-project com flag mental --skip-boost e continuar do Passo 2
+# Pular o passo 6 (boost) na re-execução:
+# Invocar init-project com flag mental --skip-boost e continuar do Passo 7
 ```

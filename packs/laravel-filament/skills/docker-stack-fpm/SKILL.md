@@ -33,8 +33,9 @@ A imagem `app` carrega libs do Chromium do SO porque Pest Browser roda dentro do
 - Services: `app`, `queue`, `reverb`, `nginx`, `postgres`, `redis`, `mailpit` (sempre); `minio`, `ollama`, `qdrant` (profiles desligados por padrão).
 - Sem Supervisor dentro do `app`; `queue` e `reverb` têm services próprios com a mesma imagem.
 - `.env` canônico: `DB_HOST=postgres`, `APP_SERVICE=app`, `WWWUSER=1000`, `WWWGROUP=1000`.
-- Build: `vendor/bin/sail build --no-cache`.
-- Subir tudo: `vendor/bin/sail up -d`.
+- Build antes do Laravel/Sail existir: `docker compose build app`.
+- Build depois do Sail existir: `vendor/bin/sail build --no-cache`.
+- Subir tudo depois do Sail existir: `vendor/bin/sail up -d`.
 
 ## Workflow
 
@@ -140,10 +141,14 @@ done
 
 `docker-compose.yml` lê `${WWWGROUP}` e `${DB_*}` do `.env`. Sem `WWWGROUP`, o build falha em `groupadd --gid ''`; sem `DB_HOST=postgres`, o Laravel tenta o host `pgsql` do Sail antigo.
 
-- [ ] Build e smoke check:
+- [ ] Build e smoke check. Quando invocada por `init-project` antes do Laravel existir, use Docker Compose direto. Em projeto Laravel já instalado, use Sail:
 
 ```bash
-vendor/bin/sail build --no-cache
+if [[ -x vendor/bin/sail ]]; then
+  vendor/bin/sail build --no-cache
+else
+  docker compose build app
+fi
 docker images | grep "$PROJECT_NAME"
 ```
 
@@ -165,7 +170,8 @@ Sinais ruins: imagem `app` sem libs Chromium, compose sem `mbstring`/`intl`, Nod
 ## Verification
 
 - [ ] `./.agents/skills/_helpers/verify-skill.sh .agents/skills/docker-stack-fpm/SKILL.md`
-- [ ] `vendor/bin/sail build` termina sem erro.
+- [ ] `docker compose build app` termina sem erro no bootstrap antes do Sail existir.
+- [ ] `vendor/bin/sail build` termina sem erro depois do Laravel/Sail existir.
 - [ ] `vendor/bin/sail up -d` deixa todos os services obrigatórios em `running`.
 - [ ] `vendor/bin/sail exec app node --version` retorna `v22.*`.
 - [ ] `vendor/bin/sail exec app php -m | grep -E '^(mbstring|intl|pdo_pgsql|redis|gd|opcache)$'` lista todas as extensões obrigatórias.
