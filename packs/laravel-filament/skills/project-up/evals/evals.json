@@ -1,0 +1,54 @@
+{
+  "skill_name": "project-up",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Clonei esse repositorio Linux pela primeira vez, nao tenho PHP/Composer/Node no host; sobe seguindo o README e me diga quando estiver pronto.",
+      "expected_output": "O agente deve validar Docker/Git/git-crypt, bloquear se faltarem .env/auth.json/certs, escolher docker compose quando Sail ausente, evitar ferramentas do host e exigir migrate, smoke HTTPS e composer verify.",
+      "assertions": [
+        "Nao usa PHP, Composer, Artisan, Node, npm ou npx do host.",
+        "Bloqueia se faltar .env, auth.json, .cert/cert.pem ou .cert/cert.key.",
+        "Usa docker compose up -d --build quando vendor/bin/sail ainda nao existe.",
+        "Exige vendor/bin/sail artisan migrate --force --no-interaction, smoke HTTPS de /up e /, e vendor/bin/sail composer verify antes de declarar pronto."
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "O projeto ja tem vendor e node_modules de uma tentativa anterior; sobe tudo agora e aproveita para atualizar se precisar.",
+      "expected_output": "O agente deve diagnosticar antes, perguntar antes de qualquer reinstall/update/remocao/rebuild pesado, nao rodar composer update/npm update sem aprovacao, e verificar com Sail, smoke e composer verify.",
+      "assertions": [
+        "Pergunta antes de prosseguir se vendor/ existe sem vendor/autoload.php.",
+        "Pergunta antes de prosseguir se node_modules/ existe sem node_modules/.install-complete.",
+        "Nao roda composer update, npm update, rm -rf vendor, rm -rf node_modules, docker compose down -v ou migrate:fresh sem aprovacao explicita.",
+        "Nao declara sucesso sem migrations, smoke HTTPS e vendor/bin/sail composer verify."
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Rodei docker compose up e deu ruim, preciso que voce recupere e deixe a aplicacao no ar; pode mexer se for seguro.",
+      "expected_output": "O agente deve usar recuperacao guiada por logs, separar acoes seguras de acoes destrutivas, pedir aprovacao para down -v/rm -rf/migrate:fresh/APP_KEY/update, e concluir apenas com migrate, smoke HTTPS e composer verify verdes.",
+      "assertions": [
+        "Comeca por docker compose ps/logs e diagnostico sem destruicao de dados.",
+        "Pede aprovacao antes de docker compose down -v, rm -rf vendor node_modules, migrate:fresh, key:generate --force, composer update, npm update ou rebuild --no-cache/--pull.",
+        "Usa logs para orientar recuperacao, mas nao trata logs limpos como sucesso.",
+        "Conclui apenas apos migrate, smoke HTTPS de /up e /, e vendor/bin/sail composer verify."
+      ],
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "O projeto ja esta bootstrapado, vendor/bin/sail existe e as dependencias estao completas. Sobe para eu trabalhar hoje e valida que esta ok.",
+      "expected_output": "O agente deve usar operacao diaria com vendor/bin/sail up -d sem rebuild pesado salvo necessidade explicita, rodar migrations, smoke HTTPS com APP_URL completo e vendor/bin/sail composer verify antes de declarar pronto.",
+      "assertions": [
+        "Usa vendor/bin/sail up -d para operacao diaria saudavel quando nao ha mudanca de imagem/compose.",
+        "Nao usa docker compose up -d --build ou vendor/bin/sail up -d --build sem justificar necessidade de build.",
+        "Roda vendor/bin/sail artisan migrate --force --no-interaction.",
+        "Valida /up e / usando APP_URL completo, preservando porta customizada.",
+        "Roda vendor/bin/sail composer verify antes de declarar pronto."
+      ],
+      "files": []
+    }
+  ]
+}
