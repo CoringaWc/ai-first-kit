@@ -1,0 +1,52 @@
+{
+  "skill_name": "phpdoc-conventions",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Crie uma Action ProcessImportSpreadsheetAction que importa uma planilha e cria itens de IRP; use handle() com array shape de linhas e retorne um DTO simples.",
+      "expected_output": "A Action deve ter resumo em pt_BR na classe e PHPDoc detalhado no handle(), incluindo regra de negócio, array shape, side effects, exceções e exemplo de uso com Action::run(...).",
+      "assertions": [
+        "Inclui PHPDoc de classe com resumo da regra de negócio em pt_BR com acentuação correta.",
+        "Inclui PHPDoc detalhado no handle(), não apenas @param/@throws.",
+        "Inclui exemplo de uso com ProcessImportSpreadsheetAction::run(...).",
+        "Documenta array shape e exceções quando relevantes."
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Crie um service SiasgCatalogNormalizer e uma trait HasSiasgCatalogCode para normalizar códigos CatMat/CatServ; precisa ser claro para outros devs.",
+      "expected_output": "Service e Trait devem explicar finalidade, contrato dos métodos públicos, contrato esperado do model consumidor, side effects e exemplos de uso em pt_BR.",
+      "assertions": [
+        "Documenta a classe service com finalidade e contexto SIASG.",
+        "Documenta cada método público não óbvio com exemplo de uso.",
+        "Documenta a trait com contrato esperado do model consumidor.",
+        "Não usa comentários inline como substituto do PHPDoc de contrato."
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "No model IrpItem, crie um método não convencional que calcula se o item precisa de recotação considerando origem SIASG, validade e divergência percentual.",
+      "expected_output": "O método de Model deve explicar a política de recotação, parâmetros, retorno e exemplo de uso, em pt_BR com acentuação correta.",
+      "assertions": [
+        "Explica a regra de negócio completa, não só 'indica se precisa recotar'.",
+        "Inclui exemplo de uso do método.",
+        "Documenta o significado do limite percentual quando necessário.",
+        "Mantém types nativos e não adiciona @param/@return redundantes sem necessidade."
+      ],
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Crie uma migration simples e um relationship belongsTo óbvio no model; não há regra de negócio especial.",
+      "expected_output": "O agente não deve adicionar PHPDoc verboso em up/down ou relationship óbvio, salvo se houver decisão fora do padrão.",
+      "assertions": [
+        "Dispensa PHPDoc em boilerplate óbvio de framework.",
+        "Não cria comentários que apenas repetem o nome do método.",
+        "Mantém documentação apenas se houver regra ou decisão não convencional."
+      ],
+      "files": []
+    }
+  ]
+}
