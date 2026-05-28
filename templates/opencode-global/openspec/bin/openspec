@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+exec "/home/coringawc/.config/opencode/openspec/node_modules/.bin/openspec" "$@"

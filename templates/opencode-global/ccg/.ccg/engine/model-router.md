@@ -1,0 +1,120 @@
+# CCG 模型路由器 — 运行时模型选择框架
+
+> 本文件由策略文件通过 Read 加载，提供动态模型选择和 codeagent-wrapper 调用模板。
+
+## 1. 获取模型配置
+
+读取用户配置确定可用模型：
+
+```
+Read /home/coringawc/.config/opencode/ccg/.ccg/config.toml
+```
+
+从 `[routing]` 区块提取：
+- `frontend.primary` — 前端模型（当前环境默认 `codex`）
+- `backend.primary` — 后端模型（默认 `codex`）
+- Gemini-specific model settings are disabled in this environment.
+
+如果配置文件不存在或不可读，使用默认值直接继续。
+
+## 2. 按阶段选择模型
+
+### 分析/研究阶段
+| 任务领域 | 推荐模型 | 角色提示词 |
+|---------|---------|-----------|
+| 后端/架构 | backend 模型 | `$BACKEND/analyzer.md` |
+| 前端/UI | frontend 模型 | `$FRONTEND/analyzer.md` |
+| 全栈 | codex | `codex/analyzer.md` |
+| 安全 | backend 模型 | `$BACKEND/analyzer.md` |
+
+### 规划阶段
+| 任务领域 | 推荐模型 | 角色提示词 |
+|---------|---------|-----------|
+| 架构设计 | backend 模型 | `$BACKEND/architect.md` |
+| UI/UX 设计 | frontend 模型 | `$FRONTEND/architect.md` |
+| 全栈 | codex | `codex/architect.md` |
+
+### 审查阶段
+- codex + `codex/reviewer.md`
+
+### 调试阶段
+| 任务领域 | 推荐模型 | 角色提示词 |
+|---------|---------|-----------|
+| 后端问题 | backend 模型优先 | `$BACKEND/debugger.md` |
+| 前端问题 | frontend 模型优先 | `$FRONTEND/debugger.md` |
+| 不确定 | codex | `codex/debugger.md` |
+
+### 实施阶段
+
+**默认模式**（Claude 执行）：
+- 外部模型仅提供建议，Claude 执行所有文件修改
+
+**Codex Builder 模式**（用户选择时）：
+- backend 模型 + `$BACKEND/builder.md` — **有完整写权限**，直接写代码到文件系统
+- Claude 监控进度，审查产出，必要时接管
+- 适用于 M-L 复杂度、低中风险的明确实施任务
+
+## 3. 调用模板
+
+### 获取工作目录
+
+先确定当前工作目录（不可从 $HOME 推断）：
+```
+WORKDIR=$(pwd)
+```
+
+### 新会话调用
+
+```
+Bash({
+  command: "/home/coringawc/.config/opencode/ccg/bin/codeagent-wrapper --progress --backend $MODEL - \"$WORKDIR\" <<'CODEAGENT_EOF'\nROLE_FILE: /home/coringawc/.config/opencode/ccg/.ccg/prompts/$MODEL/$ROLE.md\n<TASK>\n$TASK_CONTENT\n</TASK>\nOUTPUT: $OUTPUT_FORMAT\nCODEAGENT_EOF",
+  run_in_background: true,
+  timeout: 3600000,
+  description: "$SHORT_DESCRIPTION"
+})
+```
+
+变量说明：
+- `$MODEL` — 选定的模型名（当前环境使用 `codex`；也支持 `claude` if configured）
+- `$ROLE` — 角色文件名（`analyzer` / `architect` / `reviewer` / `debugger` / `optimizer` / `tester` / `builder`）
+- `$TASK_CONTENT` — 任务内容（需求 + 上下文）
+- `$OUTPUT_FORMAT` — 期望输出格式
+- `$SHORT_DESCRIPTION` — 简短描述（用于进度显示）
+
+### 复用会话调用
+
+```
+Bash({
+  command: "/home/coringawc/.config/opencode/ccg/bin/codeagent-wrapper --progress --backend $MODEL resume $SESSION_ID - \"$WORKDIR\" <<'CODEAGENT_EOF'\nROLE_FILE: /home/coringawc/.config/opencode/ccg/.ccg/prompts/$MODEL/$ROLE.md\n<TASK>\n$TASK_CONTENT\n</TASK>\nOUTPUT: $OUTPUT_FORMAT\nCODEAGENT_EOF",
+  run_in_background: true,
+  timeout: 3600000,
+  description: "$SHORT_DESCRIPTION"
+})
+```
+
+### 后台调用模式
+
+启动可用外部模型并等待结果：
+
+1. 启动 codex（`run_in_background: true`）
+2. 等待完成：
+   ```
+   TaskOutput({ task_id: "$CODEX_TASK_ID", block: true, timeout: 600000 })
+   ```
+3. 综合模型结果和本地上下文
+
+## 4. 等待与重试规则
+
+| 场景 | 策略 |
+|------|------|
+| frontend 模型失败 | 重试最多 2 次，间隔 5s |
+| backend 模型运行中 | 可能需要 5-15 分钟，保持轮询，永不终止 |
+| 3 次全败 | 降级为单模型模式，告知用户 |
+| 超时 | 600s 等待上限，超时后报告并询问用户 |
+
+## 5. SESSION_ID 管理
+
+- 每次 codeagent-wrapper 调用返回 `Session-ID: xxx`
+- 捕获并保存：`BACKEND_SESSION`、`FRONTEND_SESSION`
+- 后续阶段通过 `resume $SESSION_ID` 复用上下文
+- 复用会话可减少重复分析，提升效率

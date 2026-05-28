@@ -1,0 +1,1 @@
+/home/coringawc/.config/opencode/superpowers/.opencode/plugins/superpowers.js

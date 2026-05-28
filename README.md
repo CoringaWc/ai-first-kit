@@ -8,6 +8,8 @@ This release ships **only** the host bootstrap and the kit skeleton.
 
 **Implemented:**
 - `scripts/bootstrap.sh`: installs host tools (Node ≥22 via [`mise`](https://mise.jdx.dev), `gh`, `git-crypt`, `opencode` via the [official installer](https://opencode.ai/install), `openspec` via npm) and clones the kit to `~/.config/opencode/ai-first-kit`.
+- `scripts/sync-global-opencode.sh`: captures and installs the maintainer's complete global OpenCode workflow snapshot (`templates/opencode-global`) including skills, commands, agents, prompts, plugins, hooks, scripts, manifests, CCG/ECC/GSD/OpenSpec runtime files, and docs.
+- `/ai-first-pt-br-metadata`: applies the optional pt_BR command metadata overlay by enabling `plugins/pt-br-metadata.js` and `plugins/plugin-display-names.js` through a reproducible command instead of manual config edits.
 - Symlinks the kit's own skills (`ai-first-*`) and commands into opencode's discovery paths.
 - Merges baseline MCPs (Context7 + GitHub Copilot MCP with OAuth) into `~/.config/opencode/opencode.jsonc` non-destructively.
 - `/ai-first-init` (skill + `scripts/init-project.sh`): scaffolds a brand-new AI-first project from a stack pack under `packs/`.
@@ -123,10 +125,34 @@ skills/         # ai-first-* skills (own)
 commands/       # /ai-first-* commands (own)
 .agents/skills/ # project-local skills visible only when opencode opens this clone (e.g. create-pack)
 packs/          # per-stack packs (empty in v0.1; maintainers add via /create-pack)
-templates/      # reusable snippets (placeholder)
+templates/      # reusable snippets and opencode-global workflow snapshot
 tests/          # sandbox image + per-task verifiers
 docs/           # plans and design notes
 ```
+
+## Mirroring The Global OpenCode Workflow
+
+To refresh the snapshot from the current machine:
+
+```bash
+scripts/sync-global-opencode.sh capture ~/.config/opencode
+```
+
+To install the snapshot on another machine after inspecting/backing up its current state:
+
+```bash
+AFK_YES=1 scripts/sync-global-opencode.sh install ~/.config/opencode
+```
+
+The installer backs up the previous config to `~/.config/opencode.bak-ai-first-kit-<timestamp>`, replaces the target tree, and installs packages with `npm ci` in every snapshot subdirectory with a lockfile. It intentionally does **not** copy `node_modules`; dependencies are always installed on the target. Restart opencode after installation because config, plugins, agents, and skills are loaded at process start.
+
+To enable the optional Portuguese command-description overlay after installing the snapshot:
+
+```bash
+bash scripts/apply-pt-br-metadata-command.sh ~/.config/opencode/opencode.jsonc
+```
+
+This is intentionally a command, not an ad-hoc patch: the translation metadata remains centralized in `plugins/pt-br-metadata.js` and can be reapplied consistently on every host.
 
 ## Development
 

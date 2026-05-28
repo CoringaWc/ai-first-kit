@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+POWERSHELL="/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
+AGENT_BROWSER="/home/coringawc/.config/opencode/bin/agent-browser"
+LAUNCHER='C:\Users\nt_17\AppData\Local\opencode-agent-browser\start-agent-browser.ps1'
+
+"$POWERSHELL" -NoProfile -ExecutionPolicy Bypass -File "$LAUNCHER" >/dev/null
+
+HOST_IP=$("$POWERSHELL" -NoProfile -Command "(Get-NetIPAddress -AddressFamily IPv4 | Where-Object { \$_.InterfaceAlias -like 'vEthernet (WSL*' } | Select-Object -First 1 -ExpandProperty IPAddress)")
+HOST_IP=$(printf '%s' "$HOST_IP" | tr -d '\r' | xargs)
+
+if [ -z "$HOST_IP" ]; then
+  HOST_IP="172.20.64.1"
+fi
+
+VERSION_JSON=$(curl --silent --fail --max-time 5 "http://${HOST_IP}:9225/json/version")
+WS_URL=$(printf '%s' "$VERSION_JSON" | node -e "let data=''; process.stdin.on('data', c => data += c); process.stdin.on('end', () => console.log(JSON.parse(data).webSocketDebuggerUrl));")
+
+"$AGENT_BROWSER" connect "$WS_URL" >/dev/null
+
+if [ "$#" -gt 0 ]; then
+  exec "$AGENT_BROWSER" "$@"
+fi
+
+echo "$WS_URL"

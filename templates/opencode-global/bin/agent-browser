@@ -1,0 +1,2 @@
+#!/usr/bin/env sh
+exec /home/coringawc/.config/opencode/tools/agent-browser/node_modules/.bin/agent-browser "$@"

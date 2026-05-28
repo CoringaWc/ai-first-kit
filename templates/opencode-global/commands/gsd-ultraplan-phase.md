@@ -1,0 +1,33 @@
+---
+description: "GSD: Offload beta do planejamento para ultraplan cloud e importa de volta."
+argument-hint: "[phase-number]"
+requires: [import, phase, plan-phase]
+tools:
+  read: true
+  bash: true
+  glob: true
+  grep: true
+---
+
+<objective>
+Offload GSD's plan phase to Claude Code's ultraplan cloud infrastructure.
+
+Ultraplan drafts the plan in a remote cloud session while your terminal stays free.
+Review and comment on the plan in your browser, then import it back via /gsd-import --from.
+
+⚠ BETA: ultraplan is in research preview. Use /gsd-plan-phase for stable local planning.
+Requirements: Claude Code v2.1.91+, claude.ai account, GitHub repository.
+</objective>
+
+<execution_context>
+@/home/coringawc/.config/opencode/get-shit-done/workflows/ultraplan-phase.md
+@/home/coringawc/.config/opencode/get-shit-done/references/ui-brand.md
+</execution_context>
+
+<context>
+$ARGUMENTS
+</context>
+
+<process>
+Execute the ultraplan-phase workflow end-to-end.
+</process>

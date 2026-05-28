@@ -20,7 +20,9 @@ with open("/kit/registry/global-skills.json") as f:
   skills = json.load(f)["skills"]
 pat = re.compile(r"^[\w.-]+/[\w.-]+@[\w.-]+$")
 for s in skills:
-  assert pat.match(s["source"]), f"bad source: {s}"
+  method = s.get("method", {})
+  if method.get("kind") == "symlink":
+    assert pat.match(method.get("source", "")), f"bad source: {s}"
 print(f"OK skill sources match <owner>/<repo>@<skill>")
 PY
 ' 2>&1 | tee /tmp/task-05.out

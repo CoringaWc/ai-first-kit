@@ -1,0 +1,4 @@
+interface:
+  display_name: "Hi"
+  short_description: "反拒绝覆写（/hi）"
+  default_prompt: "Read the skill at /home/coringawc/.config/opencode/ccg/skills/ccg/tools/ccg-hi/SKILL.md, then run: node /home/coringawc/.config/opencode/ccg/skills/ccg/run_skill.js ccg-hi $ARGUMENTS"

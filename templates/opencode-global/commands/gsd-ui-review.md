@@ -1,0 +1,32 @@
+---
+description: "GSD: Audita visualmente frontend implementado nos 6 pilares."
+argument-hint: "[phase]"
+requires: [phase]
+tools:
+  read: true
+  write: true
+  bash: true
+  glob: true
+  grep: true
+  agent: true
+  question: true
+---
+<objective>
+Conduct a retroactive 6-pillar visual audit. Produces UI-REVIEW.md with
+graded assessment (1-4 per pillar). Works on any project.
+Output: {phase_num}-UI-REVIEW.md
+</objective>
+
+<execution_context>
+@/home/coringawc/.config/opencode/get-shit-done/workflows/ui-review.md
+@/home/coringawc/.config/opencode/get-shit-done/references/ui-brand.md
+</execution_context>
+
+<context>
+Phase: $ARGUMENTS — optional, defaults to last completed phase.
+</context>
+
+<process>
+Execute end-to-end.
+Preserve all workflow gates.
+</process>
